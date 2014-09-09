@@ -1,4 +1,4 @@
-linshare_cli
+linshare_api
 ============
 
 Description
