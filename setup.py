@@ -30,8 +30,8 @@ with codecs.open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='linshare_api',
-    version=find_version('linshare_api', '__init__.py'),
+    name='linshareapi',
+    version=find_version('linshareapi', '__init__.py'),
     description='LinShare api.',
     long_description=long_description,
 

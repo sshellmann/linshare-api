@@ -31,8 +31,8 @@ import logging
 import logging.handlers
 import json
 
-from linshare_api.core import CoreCli
-from linshare_api.core import ResourceBuilder
+from linshareapi.core import CoreCli
+from linshareapi.core import ResourceBuilder
 
 
 # pylint: disable=C0111
