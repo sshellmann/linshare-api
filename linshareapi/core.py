@@ -446,14 +446,15 @@ class CoreCli(object):
                         "time": self.last_req_time})
         return ret
 
-    def upload(self, file_path, url, description=None):
+    def upload(self, file_path, url, description=None, file_name=None):
         self.last_req_time = None
         url = self.get_full_url(url)
         self.log.debug("upload url : " + url)
         # Generating datas and headers
         file_size = os.path.getsize(file_path)
         self.log.debug("file_path is : " + file_path)
-        file_name = os.path.basename(file_path)
+        if not file_name:
+            file_name = os.path.basename(file_path)
         self.log.debug("file_name is : " + file_name)
         if file_size <= 0:
             msg = "The file '%(filename)s' can not be uploaded \
