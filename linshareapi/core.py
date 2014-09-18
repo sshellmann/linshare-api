@@ -446,7 +446,8 @@ class CoreCli(object):
                         "time": self.last_req_time})
         return ret
 
-    def upload(self, file_path, url, description=None, file_name=None):
+    def upload(self, file_path, url, description=None, file_name=None,
+               progress_bar=True):
         self.last_req_time = None
         url = self.get_full_url(url)
         self.log.debug("upload url : " + url)
@@ -460,11 +461,14 @@ class CoreCli(object):
             msg = "The file '%(filename)s' can not be uploaded \
 because its size is less or equal to zero." % {"filename": str(file_name)}
             raise LinShareException("-1", msg)
-        widgets = [FileTransferSpeed(), ' <<<', Bar(), '>>> ',
-                   Percentage(), ' ', ETA()]
-        pbar = ProgressBar(widgets=widgets, maxval=file_size)
-        stream = FileWithCallback(file_path, 'rb', pbar.update,
-                                  file_size, file_path)
+        pbar = None
+        stream = file(file_path, 'rb')
+        if progress_bar:
+            widgets = [FileTransferSpeed(), ' <<<', Bar(), '>>> ',
+                       Percentage(), ' ', ETA()]
+            pbar = ProgressBar(widgets=widgets, maxval=file_size)
+            stream = FileWithCallback(file_path, 'rb', pbar.update,
+                                      file_size, file_path)
         post = poster.encode.MultipartParam("file", filename=file_name,
                                             fileobj=stream)
         params = [post,]
@@ -475,7 +479,8 @@ because its size is less or equal to zero." % {"filename": str(file_name)}
         request = urllib2.Request(url, datagen, headers)
         request.add_header('Accept', 'application/json')
         # request start
-        pbar.start()
+        if pbar:
+            pbar.start()
         starttime = datetime.datetime.now()
         resultq = None
         try:
@@ -500,7 +505,8 @@ because its size is less or equal to zero." % {"filename": str(file_name)}
             self.log.debug("Server error message : " + str(msg))
             # request end
             endtime = datetime.datetime.now()
-            pbar.finish()
+            if pbar:
+                pbar.finish()
             self.last_req_time = str(endtime - starttime)
             if ex.code == 502:
                 self.log.warn(
@@ -517,45 +523,47 @@ because its size is less or equal to zero." % {"filename": str(file_name)}
             raise LinShareException(code, msg)
         # request end
         endtime = datetime.datetime.now()
-        pbar.finish()
+        if pbar:
+            pbar.finish()
         self.last_req_time = str(endtime - starttime)
         self.log.debug("upload url : %(url)s : request time : %(time)s",
                        {"url": url,
                         "time": self.last_req_time})
         return json_obj
 
-    def download(self, uuid, url):
+    def download(self, uuid, url, forced_file_name=None,
+                 progress_bar=True, chunk_size=256):
         """ download a file from LinShare using its rest api.
 This method could throw exceptions like urllib2.HTTPError."""
         self.last_req_time = None
         url = self.get_full_url(url)
         self.log.debug("download url : " + url)
-
         # Building request
         request = urllib2.Request(url)
         #request.add_header('Content-Type', 'application/json; charset=UTF-8')
         request.add_header('Accept', 'application/json;charset=UTF-8')
-
         # request start
         starttime = datetime.datetime.now()
-
         # doRequest
         resultq = urllib2.urlopen(request)
-
         code = resultq.getcode()
         file_name = uuid
         self.log.debug("ret code : '" + str(code) + "'")
         if code == 200:
             content_lenth = resultq.info().getheader('Content-Length')
             if not content_lenth:
-                self.log.error("No content lengh header found !")
+                msg = "No content lengh header found !"
+                self.log.error(msg)
                 result = resultq.read()
-                print result
-                return
+                self.log.error(result)
+                raise LinShareException("-1", msg)
             file_size = int(resultq.info().getheader('Content-Length').strip())
-            content_dispo = resultq.info().getheader('Content-disposition')
-            content_dispo = content_dispo.strip()
-            file_name = extract_file_name(content_dispo)
+            if forced_file_name:
+                file_name = forced_file_name
+            else:
+                content_dispo = resultq.info().getheader('Content-disposition')
+                content_dispo = content_dispo.strip()
+                file_name = extract_file_name(content_dispo)
             if os.path.isfile(file_name):
                 cpt = 1
                 while 1:
@@ -563,19 +571,17 @@ This method could throw exceptions like urllib2.HTTPError."""
                         file_name += "." + str(cpt)
                         break
                     cpt += 1
-
-            widgets = [FileTransferSpeed(), ' <<<', Bar(), '>>> ',
-                       Percentage(), ' ', ETA()]
-            pbar = ProgressBar(widgets=widgets, maxval=file_size)
-            stream = FileWithCallback(file_name, 'w', pbar.update,
-                                      file_size, file_name)
-            pbar.start()
-
-            chunk_size = 8192
-            chunk_size = 4096
-            chunk_size = 2048
-            chunk_size = 1024
-            chunk_size = 256
+            stream = None
+            pbar = None
+            if progress_bar:
+                widgets = [FileTransferSpeed(), ' <<<', Bar(), '>>> ',
+                           Percentage(), ' ', ETA()]
+                pbar = ProgressBar(widgets=widgets, maxval=file_size)
+                stream = FileWithCallback(file_name, 'w', pbar.update,
+                                          file_size, file_name)
+                pbar.start()
+            else:
+                stream = file(file_name, 'w')
             while 1:
                 chunk = resultq.read(chunk_size)
                 if not chunk:
@@ -583,8 +589,8 @@ This method could throw exceptions like urllib2.HTTPError."""
                 stream.write(chunk)
             stream.flush()
             stream.close()
-            pbar.finish()
-
+            if pbar:
+                pbar.finish()
         # request end
         endtime = datetime.datetime.now()
         self.last_req_time = str(endtime - starttime)
