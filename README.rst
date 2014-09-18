@@ -1,4 +1,4 @@
-linshare_api
+linshareapi
 ============
 
 Description
@@ -11,5 +11,5 @@ files sharing application") api.
 Installation
 ------------
 
-You can install this module using : ``pip install linshare_api``.
+You can install this module using : ``pip install linshareapi``.
 
