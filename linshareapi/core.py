@@ -139,30 +139,30 @@ def cli_get_cache(user_function):
 
     def decorating_function(*args):
         cli = args[0]
+        nocache = cli.nocache
+        if nocache:
+            cli.log.debug("cache disabled.")
+            return log_exec_time(user_function, *args)
         url = cli.get_full_url(args[1])
         cli.log.debug("cache url : " + url)
         key = hashlib.sha256(url + "|" + cli.user).hexdigest()
         cli.log.debug("key: " + key)
         cachefile = cachedir + "/" + key
         cache_time = cli.cache_time
-        nocache = cli.nocache
         res = None
-        if nocache:
-            log.debug("cache disabled.")
-            return log_exec_time(user_function, *args)
         if os.path.isfile(cachefile):
             file_time = os.stat(cachefile).st_mtime
             form = "{da:%Y-%m-%d %H:%M:%S}"
-            log.debug("cached data : " + str(
+            cli.log.debug("cached data : " + str(
                 form.format(da=datetime.datetime.fromtimestamp(file_time))))
             if time.time() - cache_time > file_time:
-                log.debug("refreshing cached data.")
+                cli.log.debug("refreshing cached data.")
                 res = get_data(user_function, cachefile, *args)
             if not res:
                 try:
                     res = load_data(cachefile)
                 except ValueError as ex:
-                    log.debug("error : " + str(ex))
+                    cli.log.debug("error : " + str(ex))
         if not res:
             res = get_data(user_function, cachefile, *args)
         return res
@@ -418,7 +418,8 @@ class CoreCli(object):
         url = self.get_full_url(url)
         self.log.debug("create url : " + url)
         # Building request
-        post_data = json.dumps(data).encode("UTF-8")
+        post_data = json.dumps(data)
+        post_data = post_data.encode("UTF-8")
         request = urllib2.Request(url, post_data)
         request.add_header('Content-Type', 'application/json; charset=UTF-8')
         request.add_header('Accept', 'application/json')
