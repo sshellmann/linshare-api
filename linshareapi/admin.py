@@ -33,8 +33,10 @@ import json
 
 from linshareapi.core import CoreCli
 from linshareapi.core import ResourceBuilder
+from linshareapi.cache import CacheManager, Cache, Invalid, Time
 
 
+CM = CacheManager(cachedir="~/.linshare-cache-admin")
 # pylint: disable=C0111
 # Missing docstring
 # -----------------------------------------------------------------------------
@@ -61,11 +63,16 @@ class GenericAdminClass(object):
         rbu.check_required_fields()
 
 
+# -----------------------------------------------------------------------------
 class DomainAdmins(GenericAdminClass):
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'domains')
     def list(self):
         return self.core.list("domains")
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'domains')
     def create(self, data):
         self.debug(data)
         if data.get('label') is None:
@@ -77,10 +84,14 @@ class DomainAdmins(GenericAdminClass):
                     "parent identifier is required for GuestDomain / SubDomain")
         return self.core.create("domains", data)
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'domains')
     def update(self, data):
         self.debug(data)
         return self.core.update("domains", data)
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'domains')
     def delete(self, identifier):
         if identifier:
             identifier = identifier.strip(" ")
@@ -123,23 +134,32 @@ class DomainAdmins(GenericAdminClass):
         return rbu
 
 
+# -----------------------------------------------------------------------------
 class DomainPatternsAdmin(GenericAdminClass):
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'domain_patterns')
     def list(self, model=False):
         if model:
             return self.core.list("domain_patterns/models")
         else:
             return self.core.list("domain_patterns")
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'domain_patterns')
     def create(self, data):
         self.debug(data)
         self._check(data)
         return self.core.create("domain_patterns", data)
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'domain_patterns')
     def update(self, data):
         self.debug(data)
         return self.core.update("domain_patterns", data)
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'domain_patterns')
     def delete(self, identifier):
         if identifier:
             identifier = identifier.strip(" ")
@@ -167,20 +187,29 @@ class DomainPatternsAdmin(GenericAdminClass):
         return rbu
 
 
+# -----------------------------------------------------------------------------
 class LdapConnectionsAdmin(GenericAdminClass):
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'ldap')
     def list(self):
         return self.core.list("ldap_connections")
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'ldap')
     def create(self, data):
         self.debug(data)
         self._check(data)
         return self.core.create("ldap_connections", data)
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'ldap')
     def update(self, data):
         self.debug(data)
         return self.core.update("ldap_connections", data)
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'ldap')
     def delete(self, identifier):
         if identifier:
             identifier = identifier.strip(" ")
@@ -201,6 +230,8 @@ class LdapConnectionsAdmin(GenericAdminClass):
 # -----------------------------------------------------------------------------
 class ThreadsAdmin(GenericAdminClass):
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'theads')
     def list(self):
         return self.core.list("threads")
 
@@ -217,6 +248,8 @@ class ThreadsAdmin(GenericAdminClass):
 # -----------------------------------------------------------------------------
 class ThreadsMembersAdmin(GenericAdminClass):
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'theadmembers')
     def list(self, thread_uuid):
         url = "thread_members/%s" % thread_uuid
         return self.core.list(url)
@@ -276,6 +309,8 @@ class UsersAdmin(GenericAdminClass):
 # -----------------------------------------------------------------------------
 class FunctionalityAdmin(GenericAdminClass):
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'functionalities')
     def list(self, domain_id=None):
         if domain_id is None:
             domain_id = "LinShareRootDomain"
@@ -289,10 +324,14 @@ class FunctionalityAdmin(GenericAdminClass):
                                  domain_id)
         return json_obj
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'functionalities')
     def update(self, data):
         self.debug(data)
         return self.core.update("functionalities", data)
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'functionalities')
     def reset(self, data):
         self.debug(data)
         return self.core.delete("functionalities", data)

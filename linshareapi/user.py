@@ -35,12 +35,15 @@ import json
 
 from linshareapi.core import CoreCli
 from linshareapi.core import ResourceBuilder
+from linshareapi.cache import CacheManager, Cache, Invalid, Time
 
 
+CM = CacheManager()
 # pylint: disable=C0111
 # Missing docstring
 # -----------------------------------------------------------------------------
 class GenericUserClass(object):
+
     def __init__(self, corecli):
         #classname = str(self.__class__.__name__.lower())
         self.core = corecli
@@ -67,19 +70,32 @@ class GenericUserClass(object):
 # -----------------------------------------------------------------------------
 class Documents(GenericUserClass):
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'documents')
     def list(self):
         """ List all documents store into LinShare."""
         return self.core.list("documents")
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'documents')
+    def invalid(self):
+        """ List all documents store into LinShare."""
+        return "invalid : ok"
+
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'documents')
     def upload(self, file_path, description=None):
         """ Upload a file to LinShare using its rest api.
         The uploaded document uuid will be returned"""
         return self.core.upload(file_path, "documents", description)
 
+    @Time('linshareapi.cache')
     def download(self, uuid):
         url = "documents/%s/download" % uuid
         return self.core.download(uuid, url)
 
+    @Time('linshareapi.cache')
+    @Invalid(CM, 'documents')
     def delete(self, uuid):
         url = "documents/%s" % uuid
         return self.core.delete(url)
@@ -101,9 +117,12 @@ class Documents(GenericUserClass):
 # -----------------------------------------------------------------------------
 class ReceivedShares(GenericUserClass):
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'rshares')
     def list(self):
         return self.core.list("shares")
 
+    @Time('linshareapi.cache')
     def download(self, uuid):
         url = "shares/%s/download" % uuid
         return self.core.download(uuid, url)
@@ -162,6 +181,8 @@ class Threads(GenericUserClass):
 
     # pylint: disable=R0903
     # Too few public methods (1/2)
+    @Time('linshareapi.cache')
+    @Cache(CM, 'threads')
     def list(self):
         return self.core.list("threads")
 
@@ -180,6 +201,8 @@ class ThreadsMembers(GenericUserClass):
 
     # pylint: disable=R0903
     # Too few public methods (1/2)
+    @Time('linshareapi.cache')
+    @Cache(CM, 'threadmembers')
     def list(self, thread_uuid):
         url = "thread_members/%s" % thread_uuid
         return self.core.list(url)
@@ -190,6 +213,8 @@ class Users(GenericUserClass):
 
     # pylint: disable=R0903
     # Too few public methods (1/2)
+    @Time('linshareapi.cache')
+    @Cache(CM, 'users')
     def list(self):
         return self.core.list("users")
 

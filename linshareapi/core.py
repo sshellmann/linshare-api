@@ -111,7 +111,7 @@ def cli_get_cache(user_function):
     if not os.path.isdir(cachedir):
         os.makedirs(cachedir)
 
-    log = logging.getLogger('linshare-cli.cli_get_cache')
+    log = logging.getLogger('linshareapi.cache')
 
     def log_exec_time(func, *args):
         start = time.time()
@@ -177,7 +177,7 @@ class CoreCli(object):
     def __init__(self, host, user, password, verbose=False, debug=0,
                  realm="Name Of Your LinShare Realm"):
         classname = str(self.__class__.__name__.lower())
-        self.log = logging.getLogger('linshare-cli.' + classname)
+        self.log = logging.getLogger('linshareapi.' + classname)
         self.verbose = verbose
         self.debug = debug
         self.password = password
@@ -332,7 +332,6 @@ class CoreCli(object):
         self.last_req_time = str(endtime - starttime)
         return json_obj
 
-    @cli_get_cache
     def list(self, url):
         """ List ressources store into LinShare."""
         url = self.get_full_url(url)
@@ -369,13 +368,12 @@ class CoreCli(object):
         self.log.debug("delete url : " + url)
         # Building request
         request = urllib2.Request(url)
+        request.add_header('Content-Type', 'application/json; charset=UTF-8')
+        request.add_header('Accept', 'application/json')
         if data:
             # Building request
             post_data = json.dumps(data).encode("UTF-8")
             request = urllib2.Request(url, post_data)
-            request.add_header('Content-Type',
-                               'application/json; charset=UTF-8')
-            request.add_header('Accept', 'application/json')
         request.get_method = lambda: 'DELETE'
         ret = self.do_request(request)
         self.log.debug("""delete url : %(url)s : request time : %(time)s""",
