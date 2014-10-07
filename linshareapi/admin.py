@@ -100,6 +100,8 @@ class DomainAdmins(GenericAdminClass):
         data = {"identifier":  identifier}
         return self.core.delete("domains", data)
 
+    @Time('linshareapi.cache')
+    @Cache(CM, 'domains-lang')
     def options_language(self):
         return self.core.options("enums/language")
 
