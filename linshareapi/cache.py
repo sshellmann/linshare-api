@@ -10,10 +10,26 @@ import datetime
 import hashlib
 from ordereddict import OrderedDict
 
-class Cache(object):
-    def __init__(self, cm, key):
+class _Cache(object):
+
+    def compute_key(self, cli, familly, discriminant=None):
+        hash_key = hashlib.sha256()
+        hash_key.update(familly)
+        hash_key.update(cli.host)
+        hash_key.update(cli.user)
+        hash_key.update(cli.password)
+        if discriminant:
+            hash_key.update(discriminant)
+        hash_key = hash_key.hexdigest()
+        cli.log.debug("hash_key: " + hash_key)
+        return hash_key
+
+class Cache(_Cache):
+
+    def __init__(self, cm, familly, discriminant=None):
         self.cm = cm
-        self.key = key
+        self.familly = familly
+        self.discriminant = discriminant
 
     def __call__(self, original_func):
         def wrapper(*args, **kwargs):
@@ -23,57 +39,76 @@ class Cache(object):
             if nocache:
                 cli.log.debug("cache disabled.")
                 return original_func(*args, **kwargs)
-            key = hashlib.sha256(self.key + "|" + cli.user).hexdigest()
-            cli.log.debug("key: " + key)
-            if self.cm.has_key(key):
-                res = self.cm.get(key)
+            hash_key = self.compute_key(cli, self.familly, self.discriminant)
+            if self.cm.has_key(hash_key, self.familly):
+                res = self.cm.get(hash_key, self.familly)
             else:
                 res = original_func(*args, **kwargs)
-                self.cm.put(key, res)
+                self.cm.put(hash_key, res, self.familly)
             return res
         return wrapper
 
 
-class Invalid(object):
-    def __init__(self, cm, keys):
+class InvalidFamilies(_Cache):
+    def __init__(self, cm, familly):
         self.cm = cm
-        self.keys = keys
-        if not isinstance(keys, list):
-            self.keys = list(keys)
+        self.famillies = familly
+        if not isinstance(familly, list):
+            self.famillies = [familly,]
+
+    def __call__(self, original_func):
+        def wrapper(*args, **kwargs):
+            for familly in self.famillies:
+                self.cm.evict(group=familly)
+            return original_func(*args, **kwargs)
+        return wrapper
+
+class Invalid(_Cache):
+    def __init__(self, cm, familly, discriminant=None):
+        self.cm = cm
+        self.familly = familly
+        self.discriminant = discriminant
 
     def __call__(self, original_func):
         def wrapper(*args, **kwargs):
             resourceapi = args[0]
             cli = resourceapi.core
-            for k in self.keys:
-                key = hashlib.sha256(k + "|" + cli.user).hexdigest()
-                cli.log.debug("key: " + key)
-                self.cm.evict(key)
+            hash_key = self.compute_key(cli, self.familly, self.discriminant)
+            self.cm.evict(hash_key, self.familly)
             return original_func(*args, **kwargs)
         return wrapper
 
 
 class CacheManager(object):
     def __init__(self, cachedir="~/.linshare-cache", logger_name="linshareapi.cachemanager"):
-        self.cachedir = os.path.expanduser(cachedir)
-        if not os.path.isdir(self.cachedir):
-            os.makedirs(self.cachedir)
+        self.rootcachedir = os.path.expanduser(cachedir)
+        if not os.path.isdir(self.rootcachedir):
+            os.makedirs(self.rootcachedir)
         self.log = logging.getLogger(logger_name)
         self.urls = OrderedDict()
         self.cache_time = 60
 
-    def _get_cachefile(self, key):
-        return self.cachedir + "/" + key
+    def _get_cachedir(self, group=None):
+        res = [self.rootcachedir,]
+        if group:
+            res.append(group)
+        res = "/".join(res)
+        if not os.path.isdir(res):
+            os.makedirs(res)
+        return res
 
-    def _has_key(self, key):
-        cachefile = self._get_cachefile(key)
+    def _get_cachefile(self, key, group=None):
+        return self._get_cachedir(group) + "/" + key
+
+    def _has_key(self, key, group=None):
+        cachefile = self._get_cachefile(key, group)
         if os.path.isfile(cachefile):
             return True
         return False
 
-    def has_key(self, key):
-        if self._has_key(key):
-            cachefile = self._get_cachefile(key)
+    def has_key(self, key, group=None):
+        if self._has_key(key, group):
+            cachefile = self._get_cachefile(key, group)
             file_time = os.stat(cachefile).st_mtime
             form = "{da:%Y-%m-%d %H:%M:%S}"
             self.log.debug("cached data : " + str(
@@ -82,26 +117,33 @@ class CacheManager(object):
                 return True
         return False
 
-    def evict(self, key):
-        if self._has_key(key):
-            cachefile = self._get_cachefile(key)
-            self.log.debug("cached data eviction : %s", key)
-            os.remove(cachefile)
-            return True
+    def evict(self, key=None, group=None):
+        if key is None:
+            if group:
+                cachedir = self._get_cachedir(group)
+                for i in os.listdir(cachedir):
+                    self.log.debug("cached data eviction : %s : %s", group, i)
+                    os.remove(cachedir + "/" + i)
+                return True
+        else:
+            if self._has_key(key, group):
+                cachefile = self._get_cachefile(key, group)
+                self.log.debug("cached data eviction : %s : %s", group, key)
+                os.remove(cachefile)
+                return True
         return False
 
-    def get(self, key):
+    def get(self, key, group=None):
         res = None
-        self.log.debug("loading cached data : %s", key)
-        cachefile = self._get_cachefile(key)
+        self.log.debug("loading cached data : %s : %s", group, key)
+        cachefile = self._get_cachefile(key, group)
         with open(cachefile, 'rb') as fde:
             res = json.load(fde)
         return res
 
-    def put(self, key, data):
-        self.log.debug("caching data : %s", key)
-        cachefile = self._get_cachefile(key)
-        cachefile = self._get_cachefile(key)
+    def put(self, key, data, group=None):
+        self.log.debug("caching data : %s : %s", group, key)
+        cachefile = self._get_cachefile(key, group)
         with open(cachefile, 'wb') as fde:
             json.dump(data, fde)
 
