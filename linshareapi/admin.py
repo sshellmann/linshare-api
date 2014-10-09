@@ -33,12 +33,24 @@ import json
 
 from linshareapi.core import CoreCli
 from linshareapi.core import ResourceBuilder
-from linshareapi.cache import CacheManager, Cache, Invalid, Time
+from linshareapi.cache import CacheManager, Cache
+from linshareapi.cache import Invalid, InvalidFamilies
+from linshareapi.cache import Time as CTime
 
 
-CM = CacheManager(cachedir="~/.linshare-cache-admin")
 # pylint: disable=C0111
 # Missing docstring
+# pylint: disable=R0903
+# Too few public methods
+# -----------------------------------------------------------------------------
+CM = CacheManager()
+
+# -----------------------------------------------------------------------------
+class Time(CTime):
+    def __init__(self, suffix, **kwargs):
+        super(Time, self).__init__('linshareapi.admincli.' + suffix, **kwargs)
+
+
 # -----------------------------------------------------------------------------
 class GenericAdminClass(object):
     def __init__(self, corecli):
@@ -64,15 +76,27 @@ class GenericAdminClass(object):
 
 
 # -----------------------------------------------------------------------------
+class CacheDomains(Cache):
+    def __init__(self, **kwargs):
+        super(CacheDomains, self).__init__(CM, 'domains', **kwargs)
+
+
+# -----------------------------------------------------------------------------
+class InvalidDomains(Invalid):
+    def __init__(self, **kwargs):
+        super(InvalidDomains, self).__init__(CM, 'domains', **kwargs)
+
+
+# -----------------------------------------------------------------------------
 class DomainAdmins(GenericAdminClass):
 
-    @Time('linshareapi.cache')
-    @Cache(CM, 'domains')
+    @Time('domains.list')
+    @CacheDomains()
     def list(self):
         return self.core.list("domains")
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'domains')
+    @Time('domains.create')
+    @InvalidDomains()
     def create(self, data):
         self.debug(data)
         if data.get('label') is None:
@@ -84,14 +108,14 @@ class DomainAdmins(GenericAdminClass):
                     "parent identifier is required for GuestDomain / SubDomain")
         return self.core.create("domains", data)
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'domains')
+    @Time('domains.update')
+    @InvalidDomains()
     def update(self, data):
         self.debug(data)
         return self.core.update("domains", data)
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'domains')
+    @Time('domains.delete')
+    @InvalidDomains()
     def delete(self, identifier):
         if identifier:
             identifier = identifier.strip(" ")
@@ -100,8 +124,7 @@ class DomainAdmins(GenericAdminClass):
         data = {"identifier":  identifier}
         return self.core.delete("domains", data)
 
-    @Time('linshareapi.cache')
-    @Cache(CM, 'domains-lang')
+    @Cache(CM, 'domains-lang', cache_duration=3600)
     def options_language(self):
         return self.core.options("enums/language")
 
@@ -112,7 +135,6 @@ class DomainAdmins(GenericAdminClass):
     def options_type(self):
         # pylint: disable=R0201
         return ['GUESTDOMAIN', 'SUBDOMAIN', 'TOPDOMAIN']
-
 
     def get_rbu(self):
         rbu = ResourceBuilder("domains")
@@ -137,31 +159,43 @@ class DomainAdmins(GenericAdminClass):
 
 
 # -----------------------------------------------------------------------------
+class CacheDPatterns(Cache):
+    def __init__(self, **kwargs):
+        super(CacheDPatterns, self).__init__(CM, 'domain_patterns', **kwargs)
+
+
+# -----------------------------------------------------------------------------
+class InvalidDPatterns(Invalid):
+    def __init__(self, **kwargs):
+        super(InvalidDPatterns, self).__init__(CM, 'domain_patterns', **kwargs)
+
+
+# -----------------------------------------------------------------------------
 class DomainPatternsAdmin(GenericAdminClass):
 
-    @Time('linshareapi.cache')
-    @Cache(CM, 'domain_patterns')
+    @Time('domain_patterns.list')
+    @CacheDPatterns(arguments=True)
     def list(self, model=False):
         if model:
             return self.core.list("domain_patterns/models")
         else:
             return self.core.list("domain_patterns")
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'domain_patterns')
+    @Time('domain_patterns.create')
+    @InvalidDPatterns()
     def create(self, data):
         self.debug(data)
         self._check(data)
         return self.core.create("domain_patterns", data)
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'domain_patterns')
+    @Time('domain_patterns.update')
+    @InvalidDPatterns()
     def update(self, data):
         self.debug(data)
         return self.core.update("domain_patterns", data)
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'domain_patterns')
+    @Time('domain_patterns.delete')
+    @InvalidDPatterns()
     def delete(self, identifier):
         if identifier:
             identifier = identifier.strip(" ")
@@ -190,28 +224,40 @@ class DomainPatternsAdmin(GenericAdminClass):
 
 
 # -----------------------------------------------------------------------------
+class CacheLdap(Cache):
+    def __init__(self, **kwargs):
+        super(CacheLdap, self).__init__(CM, 'ldap', **kwargs)
+
+
+# -----------------------------------------------------------------------------
+class InvalidLdap(Invalid):
+    def __init__(self, **kwargs):
+        super(InvalidLdap, self).__init__(CM, 'ldap', **kwargs)
+
+
+# -----------------------------------------------------------------------------
 class LdapConnectionsAdmin(GenericAdminClass):
 
-    @Time('linshareapi.cache')
-    @Cache(CM, 'ldap')
+    @Time('ldap.list')
+    @CacheLdap()
     def list(self):
         return self.core.list("ldap_connections")
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'ldap')
+    @Time('ldap.create')
+    @InvalidLdap()
     def create(self, data):
         self.debug(data)
         self._check(data)
         return self.core.create("ldap_connections", data)
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'ldap')
+    @Time('ldap.update')
+    @InvalidLdap()
     def update(self, data):
         self.debug(data)
         return self.core.update("ldap_connections", data)
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'ldap')
+    @Time('ldap.delete')
+    @InvalidLdap()
     def delete(self, identifier):
         if identifier:
             identifier = identifier.strip(" ")
@@ -232,7 +278,7 @@ class LdapConnectionsAdmin(GenericAdminClass):
 # -----------------------------------------------------------------------------
 class ThreadsAdmin(GenericAdminClass):
 
-    @Time('linshareapi.cache')
+    @Time('threads.list')
     @Cache(CM, 'theads')
     def list(self):
         return self.core.list("threads")
@@ -250,7 +296,7 @@ class ThreadsAdmin(GenericAdminClass):
 # -----------------------------------------------------------------------------
 class ThreadsMembersAdmin(GenericAdminClass):
 
-    @Time('linshareapi.cache')
+    @Time('threadmembers.list')
     @Cache(CM, 'theadmembers')
     def list(self, thread_uuid):
         url = "thread_members/%s" % thread_uuid
@@ -262,13 +308,31 @@ class ThreadsMembersAdmin(GenericAdminClass):
 
 
 # -----------------------------------------------------------------------------
+class CacheUsers(Cache):
+    def __init__(self, **kwargs):
+        super(CacheUsers, self).__init__(CM, 'users', **kwargs)
+
+
+# -----------------------------------------------------------------------------
+class InvalidUsers(Invalid):
+    def __init__(self, **kwargs):
+        super(InvalidUsers, self).__init__(CM, 'users', **kwargs)
+
+
+# -----------------------------------------------------------------------------
 class UsersAdmin(GenericAdminClass):
 
+    @Time('users.search')
+    @CacheUsers(arguments=True)
     def search(self, firstname=None, lastname=None, mail=None):
         criteria = {"firstName": firstname,
                     "lastName": lastname,
                     "mail": mail}
         return self.core.create("users/search", criteria)
+
+    @InvalidFamilies(CM, 'users')
+    def invalid(self):
+        return "invalid : ok"
 
     def autocomplete(self, pattern):
         if not pattern:
@@ -308,17 +372,31 @@ class UsersAdmin(GenericAdminClass):
         rbu.add_field('restrictedContacts', extended=True)
         return rbu
 
+
+# -----------------------------------------------------------------------------
+class CacheFuncs(Cache):
+    def __init__(self, **kwargs):
+        super(CacheFuncs, self).__init__(CM, 'functionalities', **kwargs)
+
+
+# -----------------------------------------------------------------------------
+class InvalidFuncs(Invalid):
+    def __init__(self, **kwargs):
+        super(InvalidFuncs, self).__init__(CM, 'functionalities', **kwargs)
+
+
 # -----------------------------------------------------------------------------
 class FunctionalityAdmin(GenericAdminClass):
 
-    @Time('linshareapi.cache')
-    @Cache(CM, 'functionalities')
+    @Time('functionalities.list')
+    @CacheFuncs(arguments=True)
     def list(self, domain_id=None):
         if domain_id is None:
             domain_id = "LinShareRootDomain"
         json_obj = self.core.list("functionalities?domainId=" + domain_id)
         return [row for row in json_obj if row.get('displayable') == True]
 
+    @CacheFuncs(discriminant="get", arguments=True)
     def get(self, func_id, domain_id=None):
         if domain_id is None:
             domain_id = "LinShareRootDomain"
@@ -326,14 +404,18 @@ class FunctionalityAdmin(GenericAdminClass):
                                  domain_id)
         return json_obj
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'functionalities')
+    @InvalidFamilies(CM, 'functionalities')
+    def invalid(self):
+        return "invalid : ok"
+
+    @Time('functionalities.update')
+    @InvalidFuncs()
     def update(self, data):
         self.debug(data)
         return self.core.update("functionalities", data)
 
-    @Time('linshareapi.cache')
-    @Invalid(CM, 'functionalities')
+    @Time('functionalities.reset')
+    @InvalidFuncs()
     def reset(self, data):
         self.debug(data)
         return self.core.delete("functionalities", data)

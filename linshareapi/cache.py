@@ -8,50 +8,74 @@ import json
 import logging
 import datetime
 import hashlib
+import tempfile
 from ordereddict import OrderedDict
 
-class _Cache(object):
 
-    def compute_key(self, cli, familly, discriminant=None):
-        hash_key = hashlib.sha256()
-        hash_key.update(familly)
-        hash_key.update(cli.host)
-        hash_key.update(cli.user)
-        hash_key.update(cli.password)
-        if discriminant:
+# pylint: disable=C0111
+# Missing docstring
+# pylint: disable=R0903
+# Missing docstring
+def compute_key(cli, familly, discriminant=None):
+    hash_key = hashlib.sha256()
+    hash_key.update(familly)
+    hash_key.update(cli.host)
+    hash_key.update(cli.user)
+    hash_key.update(cli.password)
+    if discriminant:
+        if isinstance(discriminant, list):
+            for i in discriminant:
+                if i is not None:
+                    hash_key.update(i)
+        elif isinstance(discriminant, tuple):
+            for i in discriminant:
+                if i is not None:
+                    hash_key.update(i)
+        else:
             hash_key.update(discriminant)
-        hash_key = hash_key.hexdigest()
-        cli.log.debug("hash_key: " + hash_key)
-        return hash_key
+    hash_key = hash_key.hexdigest()
+    cli.log.debug("hash_key: " + hash_key)
+    return hash_key
 
-class Cache(_Cache):
+# -----------------------------------------------------------------------------
+class Cache(object):
 
-    def __init__(self, cm, familly, discriminant=None):
-        self.cm = cm
+    def __init__(self, cache_manager, familly, discriminant=None,
+                 arguments=False, cache_duration=None):
+        self.cman = cache_manager
         self.familly = familly
         self.discriminant = discriminant
+        self.arguments = arguments
+        self.cache_duration = cache_duration
 
     def __call__(self, original_func):
         def wrapper(*args, **kwargs):
             resourceapi = args[0]
             cli = resourceapi.core
+            func_args = []
+            if self.arguments:
+                if len(args) > 1:
+                    func_args = list(args[1:])
+            if self.discriminant:
+                func_args.append(self.discriminant)
             nocache = cli.nocache
             if nocache:
                 cli.log.debug("cache disabled.")
                 return original_func(*args, **kwargs)
-            hash_key = self.compute_key(cli, self.familly, self.discriminant)
-            if self.cm.has_key(hash_key, self.familly):
-                res = self.cm.get(hash_key, self.familly)
+            hash_key = compute_key(cli, self.familly, func_args)
+            if self.cman.has_key(hash_key, self.familly, self.cache_duration):
+                res = self.cman.get(hash_key, self.familly)
             else:
                 res = original_func(*args, **kwargs)
-                self.cm.put(hash_key, res, self.familly)
+                self.cman.put(hash_key, res, self.familly)
             return res
         return wrapper
 
 
-class InvalidFamilies(_Cache):
-    def __init__(self, cm, familly):
-        self.cm = cm
+# -----------------------------------------------------------------------------
+class InvalidFamilies(object):
+    def __init__(self, cache_manager, familly):
+        self.cman = cache_manager
         self.famillies = familly
         if not isinstance(familly, list):
             self.famillies = [familly,]
@@ -59,13 +83,15 @@ class InvalidFamilies(_Cache):
     def __call__(self, original_func):
         def wrapper(*args, **kwargs):
             for familly in self.famillies:
-                self.cm.evict(group=familly)
+                self.cman.evict(group=familly)
             return original_func(*args, **kwargs)
         return wrapper
 
-class Invalid(_Cache):
-    def __init__(self, cm, familly, discriminant=None):
-        self.cm = cm
+
+# -----------------------------------------------------------------------------
+class Invalid(object):
+    def __init__(self, cache_manager, familly, discriminant=None):
+        self.cman = cache_manager
         self.familly = familly
         self.discriminant = discriminant
 
@@ -73,20 +99,22 @@ class Invalid(_Cache):
         def wrapper(*args, **kwargs):
             resourceapi = args[0]
             cli = resourceapi.core
-            hash_key = self.compute_key(cli, self.familly, self.discriminant)
-            self.cm.evict(hash_key, self.familly)
+            hash_key = compute_key(cli, self.familly, self.discriminant)
+            self.cman.evict(hash_key, self.familly)
             return original_func(*args, **kwargs)
         return wrapper
 
 
+# -----------------------------------------------------------------------------
 class CacheManager(object):
-    def __init__(self, cachedir="~/.linshare-cache", logger_name="linshareapi.cachemanager"):
-        self.rootcachedir = os.path.expanduser(cachedir)
+    def __init__(self, cache_duration=60,
+                 logger_name="linshareapi.cachemanager"):
+        self.rootcachedir = tempfile.gettempdir() + "/" + "linshare-cache"
         if not os.path.isdir(self.rootcachedir):
             os.makedirs(self.rootcachedir)
         self.log = logging.getLogger(logger_name)
         self.urls = OrderedDict()
-        self.cache_time = 60
+        self.cache_duration = cache_duration
 
     def _get_cachedir(self, group=None):
         res = [self.rootcachedir,]
@@ -106,15 +134,20 @@ class CacheManager(object):
             return True
         return False
 
-    def has_key(self, key, group=None):
+    def has_key(self, key, group=None, cache_duration=None):
         if self._has_key(key, group):
             cachefile = self._get_cachefile(key, group)
             file_time = os.stat(cachefile).st_mtime
             form = "{da:%Y-%m-%d %H:%M:%S}"
             self.log.debug("cached data : " + str(
                 form.format(da=datetime.datetime.fromtimestamp(file_time))))
-            if time.time() - self.cache_time < file_time:
+            if not cache_duration:
+                cache_duration = self.cache_duration
+            self.log.debug("cache_duration : %s", cache_duration)
+            if time.time() - cache_duration < file_time:
                 return True
+            else:
+                self.evict(key, group)
         return False
 
     def evict(self, key=None, group=None):
@@ -131,6 +164,14 @@ class CacheManager(object):
                 self.log.debug("cached data eviction : %s : %s", group, key)
                 os.remove(cachefile)
                 return True
+            if not group:
+                for group in os.listdir(self.rootcachedir):
+                    if self._has_key(key, group):
+                        cachefile = self._get_cachefile(key, group)
+                        self.log.debug("cached data eviction : %s : %s",
+                                       group, key)
+                        os.remove(cachefile)
+                        return True
         return False
 
     def get(self, key, group=None):
@@ -148,6 +189,7 @@ class CacheManager(object):
             json.dump(data, fde)
 
 
+# -----------------------------------------------------------------------------
 class Time(object):
     def __init__(self, logger_name, return_time=False):
         self.log = logging.getLogger(logger_name)
@@ -159,7 +201,7 @@ class Time(object):
             res = original_func(*args, **kwargs)
             end = time.time()
             diff = end - start
-            self.log.debug("function time : " + str(diff))
+            self.log.debug("execution time : " + str(diff))
             if self.return_time:
                 return (diff, res)
             else:
