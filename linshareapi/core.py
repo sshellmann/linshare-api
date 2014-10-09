@@ -368,12 +368,14 @@ class CoreCli(object):
         self.log.debug("delete url : " + url)
         # Building request
         request = urllib2.Request(url)
-        request.add_header('Content-Type', 'application/json; charset=UTF-8')
         request.add_header('Accept', 'application/json')
         if data:
             # Building request
             post_data = json.dumps(data).encode("UTF-8")
             request = urllib2.Request(url, post_data)
+            request.add_header('Accept', 'application/json')
+            request.add_header('Content-Type',
+                               'application/json; charset=UTF-8')
         request.get_method = lambda: 'DELETE'
         ret = self.do_request(request)
         self.log.debug("""delete url : %(url)s : request time : %(time)s""",
