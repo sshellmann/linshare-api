@@ -26,11 +26,11 @@ def compute_key(cli, familly, discriminant=None):
         if isinstance(discriminant, list):
             for i in discriminant:
                 if i is not None:
-                    hash_key.update(i)
+                    hash_key.update(str(i))
         elif isinstance(discriminant, tuple):
             for i in discriminant:
                 if i is not None:
-                    hash_key.update(i)
+                    hash_key.update(str(i))
         else:
             hash_key.update(discriminant)
     hash_key = hash_key.hexdigest()
@@ -73,29 +73,30 @@ class Cache(object):
 
 
 # -----------------------------------------------------------------------------
-class InvalidFamilies(object):
-    def __init__(self, cache_manager, familly):
+class Invalid(object):
+    def __init__(self, cache_manager, familly, discriminant=None,
+                 whole_familly=False):
         self.cman = cache_manager
-        self.famillies = familly
-        if not isinstance(familly, list):
-            self.famillies = [familly,]
+        self.familly = familly
+        if whole_familly:
+            if not isinstance(familly, list):
+                self.familly = [familly,]
+        self.discriminant = discriminant
 
     def __call__(self, original_func):
+        if True:
+            return self.get_invalid_whole_familly(original_func)
+        else:
+            return self.get_invalid_one_key(original_func)
+
+    def get_invalid_whole_familly(self, original_func):
         def wrapper(*args, **kwargs):
-            for familly in self.famillies:
+            for familly in self.familly:
                 self.cman.evict(group=familly)
             return original_func(*args, **kwargs)
         return wrapper
 
-
-# -----------------------------------------------------------------------------
-class Invalid(object):
-    def __init__(self, cache_manager, familly, discriminant=None):
-        self.cman = cache_manager
-        self.familly = familly
-        self.discriminant = discriminant
-
-    def __call__(self, original_func):
+    def get_invalid_one_key(self, original_func):
         def wrapper(*args, **kwargs):
             resourceapi = args[0]
             cli = resourceapi.core

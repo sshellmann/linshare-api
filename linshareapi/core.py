@@ -36,11 +36,9 @@ import urllib2
 import cookielib
 import json
 import poster
-import time
 import datetime
 from ordereddict import OrderedDict
 from progressbar import ProgressBar, FileTransferSpeed, Bar, ETA, Percentage
-import hashlib
 
 # pylint: disable=C0111
 # Missing docstring
@@ -103,71 +101,6 @@ class FileWithCallback(file):
         else:
             self._callback(self._seen)
         data = file.write(self, data)
-
-
-def cli_get_cache(user_function):
-    cachedir = "~/.linshare-cache"
-    cachedir = os.path.expanduser(cachedir)
-    if not os.path.isdir(cachedir):
-        os.makedirs(cachedir)
-
-    log = logging.getLogger('linshareapi.cache')
-
-    def log_exec_time(func, *args):
-        start = time.time()
-        res = func(*args)
-        end = time.time()
-        log.debug("function time : " + str(end - start))
-        return res
-
-    def get_data(func, cachefile, *args):
-        res = log_exec_time(func, *args)
-        with open(cachefile, 'wb') as fde:
-            json.dump(res, fde)
-        return res
-
-    def _load_data(cachefile):
-        if os.path.isfile(cachefile):
-            with open(cachefile, 'rb') as fde:
-                res = json.load(fde)
-            return res
-        else:
-            raise ValueError("no file found.")
-
-    def load_data(cachefile):
-        return log_exec_time(_load_data, cachefile)
-
-    def decorating_function(*args):
-        cli = args[0]
-        nocache = cli.nocache
-        if nocache:
-            cli.log.debug("cache disabled.")
-            return log_exec_time(user_function, *args)
-        url = cli.get_full_url(args[1])
-        cli.log.debug("cache url : " + url)
-        key = hashlib.sha256(url + "|" + cli.user).hexdigest()
-        cli.log.debug("key: " + key)
-        cachefile = cachedir + "/" + key
-        cache_time = cli.cache_time
-        res = None
-        if os.path.isfile(cachefile):
-            file_time = os.stat(cachefile).st_mtime
-            form = "{da:%Y-%m-%d %H:%M:%S}"
-            cli.log.debug("cached data : " + str(
-                form.format(da=datetime.datetime.fromtimestamp(file_time))))
-            if time.time() - cache_time > file_time:
-                cli.log.debug("refreshing cached data.")
-                res = get_data(user_function, cachefile, *args)
-            if not res:
-                try:
-                    res = load_data(cachefile)
-                except ValueError as ex:
-                    cli.log.debug("error : " + str(ex))
-        if not res:
-            res = get_data(user_function, cachefile, *args)
-        return res
-
-    return decorating_function
 
 
 # -----------------------------------------------------------------------------
