@@ -79,9 +79,9 @@ class Documents(GenericClass):
         return self.core.upload(file_path, "documents", description)
 
     @Time('download')
-    def download(self, uuid):
+    def download(self, uuid, directory=None):
         url = "documents/%s/download" % uuid
-        return self.core.download(uuid, url)
+        return self.core.download(uuid, url, directory=directory)
 
     @Time('delete')
     @Invalid()

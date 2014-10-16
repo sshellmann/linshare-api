@@ -466,7 +466,8 @@ because its size is less or equal to zero." % {"filename": str(file_name)}
         return json_obj
 
     def download(self, uuid, url, forced_file_name=None,
-                 progress_bar=True, chunk_size=256):
+                 progress_bar=True, chunk_size=256,
+                 directory=None, overwrite=False):
         """ download a file from LinShare using its rest api.
 This method could throw exceptions like urllib2.HTTPError."""
         self.last_req_time = None
@@ -498,13 +499,19 @@ This method could throw exceptions like urllib2.HTTPError."""
                 content_dispo = resultq.info().getheader('Content-disposition')
                 content_dispo = content_dispo.strip()
                 file_name = extract_file_name(content_dispo)
+            if directory:
+                if os.path.isdir(directory):
+                    file_name = directory + "/" + file_name
             if os.path.isfile(file_name):
-                cpt = 1
-                while 1:
-                    if not os.path.isfile(file_name + "." + str(cpt)):
-                        file_name += "." + str(cpt)
-                        break
-                    cpt += 1
+                if not overwrite:
+                    cpt = 1
+                    while 1:
+                        if not os.path.isfile(file_name + "." + str(cpt)):
+                            file_name += "." + str(cpt)
+                            break
+                        cpt += 1
+                else:
+                    self.log.warn("'%s' already exists. It was overwriten.", file_name)
             stream = None
             pbar = None
             if progress_bar:
