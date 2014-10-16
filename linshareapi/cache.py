@@ -25,11 +25,11 @@ def compute_key(cli, familly, discriminant=None):
     if discriminant:
         if isinstance(discriminant, list):
             for i in discriminant:
-                if i is not None:
+                if i is not None and i is not False:
                     hash_key.update(str(i))
         elif isinstance(discriminant, tuple):
             for i in discriminant:
-                if i is not None:
+                if i is not None and i is not False:
                     hash_key.update(str(i))
         else:
             hash_key.update(discriminant)
@@ -192,9 +192,11 @@ class CacheManager(object):
 
 # -----------------------------------------------------------------------------
 class Time(object):
-    def __init__(self, logger_name, return_time=False):
+    def __init__(self, logger_name, return_time=False, info=None, label="execution time : %s"):
         self.log = logging.getLogger(logger_name)
         self.return_time = return_time
+        self.info = info
+        self.label = label
 
     def __call__(self, original_func):
         def time_wrapper(*args, **kwargs):
@@ -202,7 +204,14 @@ class Time(object):
             res = original_func(*args, **kwargs)
             end = time.time()
             diff = end - start
-            self.log.debug("execution time : " + str(diff))
+            resourceapi = args[0]
+            info = self.info
+            if self.info is None:
+                info = getattr(resourceapi, "verbose", False)
+            if info:
+                self.log.info(self.label, diff)
+            else:
+                self.log.debug(self.label, diff)
             if self.return_time:
                 return (diff, res)
             else:

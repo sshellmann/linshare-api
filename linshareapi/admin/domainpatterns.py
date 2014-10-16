@@ -73,6 +73,11 @@ class DomainPatterns(GenericClass):
         self._check(data)
         return self.core.create("domain_patterns", data)
 
+    @Time('invalid')
+    @Invalid()
+    def invalid(self):
+        return "invalid ok"
+
     @Time('update')
     @Invalid(whole_familly=True)
     def update(self, data):
