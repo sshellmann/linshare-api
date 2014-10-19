@@ -29,7 +29,7 @@ from linshareapi.user.users import Users
 from linshareapi.user.rshares import ReceivedShares
 from linshareapi.user.shares import Shares
 from linshareapi.user.threads import Threads
-from linshareapi.user.tmembers import ThreadsMembers
+from linshareapi.user.threadmembers import ThreadsMembers
 from linshareapi.user.documents import Documents
 
 
