@@ -72,7 +72,7 @@ class Documents(GenericClass):
         return "invalid : ok"
 
     @Time('upload')
-    @Invalid()
+    @Invalid(whole_familly=True)
     def upload(self, file_path, description=None):
         """ Upload a file to LinShare using its rest api.
         The uploaded document uuid will be returned"""
