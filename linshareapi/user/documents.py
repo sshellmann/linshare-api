@@ -59,6 +59,16 @@ class Invalid(IInvalid):
 # -----------------------------------------------------------------------------
 class Documents(GenericClass):
 
+    @Time('get')
+    def get(self, uuid):
+        """ Get one document store into LinShare."""
+        #return self.core.get("documents/" + uuid)
+        documents = (v for v in self.list() if v.get('uuid') == uuid)
+        for i in documents:
+            self.log.debug(i)
+            return i
+        return None
+
     @Time('list')
     @Cache()
     def list(self):
