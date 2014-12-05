@@ -65,9 +65,17 @@ class ReceivedShares(GenericClass):
         return self.core.list("shares")
 
     @Time('download')
-    def download(self, uuid):
+    def download(self, uuid, directory=None):
+        # TODO : manage output dir
         url = "shares/%s/download" % uuid
         return self.core.download(uuid, url)
+
+    @Time('delete')
+    @Invalid()
+    def delete(self, uuid):
+        # TODO implement delete method if backend support it
+        self.log.warn("Not implemented yed")
+        pass
 
     def get_rbu(self):
         rbu = ResourceBuilder("rshares")
