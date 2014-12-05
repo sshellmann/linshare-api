@@ -78,13 +78,14 @@ class Invalid(object):
                  whole_familly=False):
         self.cman = cache_manager
         self.familly = familly
+        self.whole_familly = whole_familly
         if whole_familly:
             if not isinstance(familly, list):
                 self.familly = [familly,]
         self.discriminant = discriminant
 
     def __call__(self, original_func):
-        if True:
+        if self.whole_familly:
             return self.get_invalid_whole_familly(original_func)
         else:
             return self.get_invalid_one_key(original_func)
