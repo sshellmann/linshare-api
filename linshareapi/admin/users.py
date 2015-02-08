@@ -62,6 +62,17 @@ class Users(GenericClass):
     @Time('search')
     @Cache(arguments=True)
     def search(self, firstname=None, lastname=None, mail=None):
+        if not  (firstname or lastname or mail):
+            raise ValueError('You should use at least one argument.')
+        a = 0
+        if firstname:
+            a += len(firstname)
+        if lastname:
+            a += len(lastname)
+        if mail:
+            a += len(mail)
+        if a < 3:
+            raise ValueError('You should use at least 3 charaters.')
         criteria = {"firstName": firstname,
                     "lastName": lastname,
                     "mail": mail}
