@@ -64,14 +64,14 @@ class Users(GenericClass):
     def search(self, firstname=None, lastname=None, mail=None):
         if not  (firstname or lastname or mail):
             raise ValueError('You should use at least one argument.')
-        a = 0
+        count = 0
         if firstname:
-            a += len(firstname)
+            count += len(firstname)
         if lastname:
-            a += len(lastname)
+            count += len(lastname)
         if mail:
-            a += len(mail)
-        if a < 3:
+            count += len(mail)
+        if count < 3:
             raise ValueError('You should use at least 3 charaters.')
         criteria = {"firstName": firstname,
                     "lastName": lastname,
