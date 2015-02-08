@@ -59,6 +59,16 @@ class Invalid(IInvalid):
 # -----------------------------------------------------------------------------
 class Domains(GenericClass):
 
+    @Time('get')
+    def get(self, identifier):
+        """ Get one domain."""
+        #return self.core.get("domains/" + identifier)
+        domains = (v for v in self.list() if v.get('identifier') == identifier)
+        for i in domains:
+            self.log.debug(i)
+            return i
+        return None
+
     @Time('list')
     @Cache()
     def list(self):
@@ -90,8 +100,10 @@ class Domains(GenericClass):
             identifier = identifier.strip(" ")
         if not identifier:
             raise ValueError("identifier is required")
+        obj = self.get(identifier)
         data = {"identifier":  identifier}
-        return self.core.delete("domains", data)
+        self.core.delete("domains", data)
+        return obj
 
     @CCache(CM, 'domain-lang', cache_duration=3600)
     def options_language(self):
