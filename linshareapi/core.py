@@ -250,7 +250,7 @@ class CoreCli(object):
                 self.log.info(msg)
             else:
                 self.log.debug(msg)
-            if ex.code == 400:
+            if ex.code == 400 or ex.code == 403:
                 json_obj = self.get_json_result(ex)
                 code = json_obj.get('errCode')
                 msg = json_obj.get('message')
