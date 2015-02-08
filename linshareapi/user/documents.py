@@ -94,7 +94,7 @@ class Documents(GenericClass):
         return self.core.download(uuid, url, directory=directory)
 
     @Time('delete')
-    @Invalid()
+    @Invalid(whole_familly=True)
     def delete(self, uuid):
         url = "documents/%s" % uuid
         return self.core.delete(url)
