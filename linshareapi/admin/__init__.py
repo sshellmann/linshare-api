@@ -32,6 +32,7 @@ from linshareapi.admin.threads import  Threads
 from linshareapi.admin.threadmembers import ThreadsMembers
 from linshareapi.admin.users import Users
 from linshareapi.admin.ldapconnections import LdapConnections
+from linshareapi.admin.domainpolicies import DomainPolicies
 
 
 # -----------------------------------------------------------------------------
@@ -47,3 +48,4 @@ class AdminCli(CoreCli):
         self.ldap_connections = LdapConnections(self)
         self.domain_patterns = DomainPatterns(self)
         self.funcs = Functionalities(self)
+        self.domain_policies = DomainPolicies(self)
