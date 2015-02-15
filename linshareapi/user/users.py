@@ -74,4 +74,17 @@ class Users(GenericClass):
         rbu.add_field('uuid')
         rbu.add_field('domain')
         rbu.add_field('guest')
+        rbu.add_field("role")
+        rbu.add_field("accountType")
+        # Field use less because there are not filled by the server
+        #rbu.add_field("canCreateGuest", extended = True)
+        #rbu.add_field("canUpload", extended = True)
+        #rbu.add_field("restricted", extended = True)
+        #rbu.add_field("restrictedContacts", extended = True)
+        #rbu.add_field("creationDate", extended = True)
+        #rbu.add_field("expirationDate", extended = True)
+        #rbu.add_field("modificationDate", extended = True)
+        #rbu.add_field("comment", extended = True)
+        #rbu.add_field("locale", extended = True)
+        #rbu.add_field("externalMailLocale", extended = True)
         return rbu
