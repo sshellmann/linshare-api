@@ -191,16 +191,17 @@ class CacheManager(object):
         with open(cachefile, 'wb') as fde:
             json.dump(data, fde)
 
-
+from functools import wraps
 # -----------------------------------------------------------------------------
 class Time(object):
-    def __init__(self, logger_name, return_time=False, info=None, label="execution time : %s"):
+    def __init__(self, logger_name, return_time=False, info=None, label="execution time : %(time)s"):
         self.log = logging.getLogger(logger_name)
         self.return_time = return_time
         self.info = info
         self.label = label
 
     def __call__(self, original_func):
+        @wraps(original_func)
         def time_wrapper(*args, **kwargs):
             start = time.time()
             res = original_func(*args, **kwargs)
@@ -208,12 +209,11 @@ class Time(object):
             diff = end - start
             resourceapi = args[0]
             info = self.info
-            if self.info is None:
+            self.log.debug(self.label, {'time': diff})
+            if info is None:
                 info = getattr(resourceapi, "verbose", False)
             if info:
-                self.log.info(self.label, diff)
-            else:
-                self.log.debug(self.label, diff)
+                print self.label % {'time': diff}
             if self.return_time:
                 return (diff, res)
             else:
