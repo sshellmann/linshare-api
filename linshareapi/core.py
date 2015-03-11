@@ -104,6 +104,22 @@ class FileWithCallback(file):
 
 
 # -----------------------------------------------------------------------------
+class ApiNotImplementedYet(object):
+
+    def __init__(self, corecli, version, end_point):
+        self.core = corecli
+        self.end_point = end_point
+        self.version = version
+
+    def __getattr__(self, name):
+        raise NotImplementedError(
+            "The current end point '%(api)s' is not supported in the api \
+version '%(version)s'." % {
+                'api' : self.end_point,
+                'version' : self.version})
+
+
+# -----------------------------------------------------------------------------
 class CoreCli(object):
 
     # pylint: disable=R0902

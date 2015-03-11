@@ -25,6 +25,7 @@
 #
 
 from linshareapi.core import CoreCli
+from linshareapi.core import ApiNotImplementedYet as ANIY
 from linshareapi.user.users import Users
 from linshareapi.user.rshares import ReceivedShares
 from linshareapi.user.shares import Shares
@@ -35,12 +36,31 @@ from linshareapi.user.documents import Documents
 
 # -----------------------------------------------------------------------------
 class UserCli(CoreCli):
-    def __init__(self, *args, **kwargs):
-        super(UserCli, self).__init__(*args, **kwargs)
+
+    VERSION = 0
+    VERSIONS = [0, 1]
+
+    def __init__(self, host, user, password, verbose, debug, api_version=None):
+        super(UserCli, self).__init__(host, user, password, verbose, debug)
+        if api_version is None:
+            api_version = self.VERSION
+        if api_version not in self.VERSIONS:
+            raise ValueError("API version not supported : " + str(api_version))
         self.base_url = "linshare/webservice/rest"
-        self.documents = Documents(self)
-        self.rshares = ReceivedShares(self)
-        self.shares = Shares(self)
-        self.threads = Threads(self)
-        self.thread_members = ThreadsMembers(self)
-        self.users = Users(self)
+        # Default API
+        self.documents = ANIY(self, api_version, "documents")
+        self.rshares = ANIY(self, api_version, "rshares")
+        self.shares = ANIY(self, api_version, "shares")
+        self.threads = ANIY(self, api_version, "threads")
+        self.thread_members = ANIY(self, api_version, "thread_members")
+        self.users = ANIY(self, api_version, "users")
+        # API declarations
+        if api_version == 0:
+            self.documents = Documents(self)
+            self.rshares = ReceivedShares(self)
+            self.shares = Shares(self)
+            self.threads = Threads(self)
+            self.thread_members = ThreadsMembers(self)
+            self.users = Users(self)
+        elif api_version == 1:
+            self.threads = Threads(self)

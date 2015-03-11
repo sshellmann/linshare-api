@@ -25,6 +25,7 @@
 #
 
 from linshareapi.core import CoreCli
+from linshareapi.core import ApiNotImplementedYet as ANIY
 from linshareapi.admin.domains import Domains
 from linshareapi.admin.domainpatterns import DomainPatterns
 from linshareapi.admin.functionalities import Functionalities
@@ -38,14 +39,33 @@ from linshareapi.admin.domainpolicies import DomainPolicies
 # -----------------------------------------------------------------------------
 class AdminCli(CoreCli):
     # pylint: disable=R0902
-    def __init__(self, *args, **kwargs):
-        super(AdminCli, self).__init__(*args, **kwargs)
+
+    VERSION = 0
+    VERSIONS = [0, ]
+
+    def __init__(self, host, user, password, verbose, debug, api_version=None):
+        super(AdminCli, self).__init__(host, user, password, verbose, debug)
+        if api_version is None:
+            api_version = self.VERSION
+        if api_version not in self.VERSIONS:
+            raise ValueError("API version not supported : " + str(api_version))
         self.base_url = "linshare/webservice/rest/admin"
-        self.threads = Threads(self)
-        self.thread_members = ThreadsMembers(self)
-        self.users = Users(self)
-        self.domains = Domains(self)
-        self.ldap_connections = LdapConnections(self)
-        self.domain_patterns = DomainPatterns(self)
-        self.funcs = Functionalities(self)
-        self.domain_policies = DomainPolicies(self)
+        # Default API
+        self.threads = ANIY(self, api_version, "threads")
+        self.thread_members = ANIY(self, api_version, "thread_members")
+        self.users = ANIY(self, api_version, "users")
+        self.domains = ANIY(self, api_version, "domains")
+        self.ldap_connections = ANIY(self, api_version, "ldap_connections")
+        self.domain_patterns = ANIY(self, api_version, "domain_patterns")
+        self.funcs = ANIY(self, api_version, "funcs")
+        self.domain_policies = ANIY(self, api_version, "domain_policies")
+        # API declarations
+        if api_version == 0:
+            self.threads = Threads(self)
+            self.thread_members = ThreadsMembers(self)
+            self.users = Users(self)
+            self.domains = Domains(self)
+            self.ldap_connections = LdapConnections(self)
+            self.domain_patterns = DomainPatterns(self)
+            self.funcs = Functionalities(self)
+            self.domain_policies = DomainPolicies(self)
