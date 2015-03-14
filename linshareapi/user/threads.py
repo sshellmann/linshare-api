@@ -66,6 +66,16 @@ class Threads(GenericClass):
     def list(self):
         return self.core.list("threads")
 
+    @Time('delete')
+    @Invalid()
+    def delete(self, uuid):
+        self.log.warn("Not implemented yed")
+
+    @Time('invalid')
+    @Invalid()
+    def invalid(self):
+        return "invalid : ok"
+
     def get_rbu(self):
         rbu = ResourceBuilder("threads")
         rbu.add_field('name', required=True)
@@ -74,3 +84,36 @@ class Threads(GenericClass):
         rbu.add_field('creationDate')
         rbu.add_field('modificationDate')
         return rbu
+
+
+# -----------------------------------------------------------------------------
+class Threads2(Threads):
+
+    @Time('get')
+    def get(self, uuid):
+        """ Get one thread."""
+        return self.core.get("threads/%s" % uuid)
+
+    @Time('delete')
+    @Invalid()
+    def delete(self, uuid):
+        """ Delete one thread."""
+        res = self.get(uuid)
+        url = "threads/%s" % uuid
+        self.core.delete(url)
+        return res
+
+    @Time('update')
+    @Invalid()
+    def update(self, data):
+        """ Update a thread."""
+        self.debug(data)
+        url = "threads/%s" % data.get('uuid')
+        return self.core.update(url, data)
+
+    @Time('create')
+    @Invalid()
+    def create(self, data):
+        self.debug(data)
+        self._check(data)
+        return self.core.create("threads", data)

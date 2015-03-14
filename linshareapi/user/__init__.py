@@ -32,6 +32,10 @@ from linshareapi.user.shares import Shares
 from linshareapi.user.threads import Threads
 from linshareapi.user.threadmembers import ThreadsMembers
 from linshareapi.user.documents import Documents
+# V2
+from linshareapi.user.documents import Documents2
+from linshareapi.user.rshares import ReceivedShares2
+from linshareapi.user.threads import Threads2
 
 
 # -----------------------------------------------------------------------------
@@ -63,4 +67,7 @@ class UserCli(CoreCli):
             self.thread_members = ThreadsMembers(self)
             self.users = Users(self)
         elif api_version == 1:
-            self.threads = Threads(self)
+            self.base_url = "linshare/webservice/rest/user"
+            self.documents = Documents2(self)
+            self.rshares = ReceivedShares2(self)
+            self.threads = Threads2(self)

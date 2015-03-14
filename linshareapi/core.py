@@ -250,8 +250,7 @@ class CoreCli(object):
             # doRequest
             resultq = urllib2.urlopen(request)
             code = resultq.getcode()
-            if self.verbose or self.debug:
-                self.log.info("http return code : " + str(code))
+            self.log.debug("http return code : " + str(code))
             if code == 200:
                 if force_nocontent:
                     json_obj = resultq
@@ -437,8 +436,7 @@ because its size is less or equal to zero." % {"filename": str(file_name)}
             # doRequest
             resultq = urllib2.urlopen(request)
             code = resultq.getcode()
-            if self.verbose or self.debug:
-                self.log.info("http return code : " + str(code))
+            self.log.debug("http return code : " + str(code))
             if code == 200:
                 json_obj = self.get_json_result(resultq)
         except urllib2.HTTPError as ex:

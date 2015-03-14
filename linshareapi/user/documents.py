@@ -78,7 +78,7 @@ class Documents(GenericClass):
     @Time('invalid')
     @Invalid()
     def invalid(self):
-        """ List all documents store into LinShare."""
+        """Invalid local cache"""
         return "invalid : ok"
 
     @Time('upload')
@@ -96,8 +96,10 @@ class Documents(GenericClass):
     @Time('delete')
     @Invalid(whole_familly=True)
     def delete(self, uuid):
+        res = self.get(uuid)
         url = "documents/%s" % uuid
-        return self.core.delete(url)
+        self.core.delete(url)
+        return res
 
     def get_rbu(self):
         rbu = ResourceBuilder("documents")
@@ -110,4 +112,26 @@ class Documents(GenericClass):
         rbu.add_field('expirationDate', extended=True)
         rbu.add_field('ciphered', extended=True)
         rbu.add_field('description', extended=True)
+        rbu.add_field('sha256sum', extended=True)
+        rbu.add_field('metaData', extended=True)
         return rbu
+
+
+# -----------------------------------------------------------------------------
+class Documents2(Documents):
+
+    @Time('get')
+    def get(self, uuid):
+        """ Get one document."""
+        return self.core.get("documents/%s" % uuid)
+
+    @Time('update')
+    @Invalid()
+    def update(self, data):
+        """ Update meta of one document."""
+        self.debug(data)
+        uuid = data.get('uuid')
+        url = "documents/%(uuid)s" % {
+            'uuid': uuid,
+        }
+        return self.core.update(url, data)

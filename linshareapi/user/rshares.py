@@ -66,16 +66,19 @@ class ReceivedShares(GenericClass):
 
     @Time('download')
     def download(self, uuid, directory=None):
-        # TODO : manage output dir
         url = "shares/%s/download" % uuid
-        return self.core.download(uuid, url)
+        return self.core.download(uuid, url, directory=directory)
 
     @Time('delete')
     @Invalid()
     def delete(self, uuid):
-        # TODO implement delete method if backend support it
         self.log.warn("Not implemented yed")
-        pass
+
+    @Time('invalid')
+    @Invalid()
+    def invalid(self):
+        """ List all documents store into LinShare."""
+        return "invalid : ok"
 
     def get_rbu(self):
         rbu = ResourceBuilder("rshares")
@@ -91,3 +94,30 @@ class ReceivedShares(GenericClass):
         rbu.add_field('message', extended=True)
         rbu.add_field('downloaded', extended=True)
         return rbu
+
+
+# -----------------------------------------------------------------------------
+class ReceivedShares2(ReceivedShares):
+
+    @Time('get')
+    def get(self, uuid):
+        """ Get one received share."""
+        return self.core.get("received_shares/%s" % uuid)
+
+    @Time('list')
+    @Cache()
+    def list(self):
+        return self.core.list("received_shares")
+
+    @Time('download')
+    def download(self, uuid, directory=None):
+        url = "received_shares/%s/download" % uuid
+        return self.core.download(uuid, url, directory=directory)
+
+    @Time('delete')
+    @Invalid()
+    def delete(self, uuid):
+        res = self.get(uuid)
+        url = "received_shares/%s" % uuid
+        self.core.delete(url)
+        return res
