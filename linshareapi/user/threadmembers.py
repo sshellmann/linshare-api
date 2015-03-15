@@ -27,6 +27,7 @@
 
 from __future__ import unicode_literals
 
+from linshareapi.core import ResourceBuilder
 from linshareapi.cache import Cache as CCache
 from linshareapi.cache import Invalid as IInvalid
 from linshareapi.user.core import GenericClass
@@ -65,3 +66,88 @@ class ThreadsMembers(GenericClass):
     def list(self, thread_uuid):
         url = "thread_members/%s" % thread_uuid
         return self.core.list(url)
+
+    @Time('delete')
+    @Invalid()
+    def delete(self, uuid):
+        self.log.warn("Not implemented yed")
+
+    @Time('invalid')
+    @Invalid()
+    def invalid(self):
+        return "invalid : ok"
+
+    def get_rbu(self):
+        rbu = ResourceBuilder("thread_members")
+        rbu.add_field('userUuid')
+        rbu.add_field('firstName')
+        rbu.add_field('lastName')
+        rbu.add_field('userMail', required=True)
+        rbu.add_field('role')
+        rbu.add_field('admin', extended=True)
+        rbu.add_field('readonly', extended=True)
+        rbu.add_field('id', extended=True)
+        rbu.add_field('userDomainId', extended=True)
+        rbu.add_field('threadUuid', required=True, extended=True)
+        return rbu
+
+
+# -----------------------------------------------------------------------------
+class ThreadsMembers2(ThreadsMembers):
+
+    @Time('list')
+    @Cache()
+    def list(self, thread_uuid):
+        url = "threads/%s/members" % thread_uuid
+        return self.core.list(url)
+
+
+#    @Time('get')
+#    def get(self, thread_uuid, uuid):
+#        """ Get one thread member."""
+#        url = "threads/%(t_uuid)s/members/%(uuid)s" % {
+#            't_uuid': thread_uuid,
+#            'uuid': uuid
+#        }
+#        return self.core.get(url)
+
+    @Time('get')
+    def get(self, thread_uuid, uuid):
+        """ Get one thread member."""
+        members = (v for v in self.list(thread_uuid) if v.get('userUuid') == uuid)
+        for i in members:
+            self.log.debug(i)
+            return i
+        return None
+
+    @Time('delete')
+    @Invalid()
+    def delete(self, thread_uuid, uuid):
+        """ Delete one thread member."""
+        res = self.get(thread_uuid, uuid)
+        url = "threads/%(t_uuid)s/members/%(uuid)s" % {
+            't_uuid': thread_uuid,
+            'uuid': uuid
+        }
+        self.core.delete(url)
+        return res
+
+    @Time('update')
+    @Invalid()
+    def update(self, data):
+        """ Update a thread member."""
+        self.debug(data)
+        url = "threads/%s" % data.get('uuid')
+        return self.core.update(url, data)
+
+    @Time('create')
+    @Invalid()
+    def create(self, data):
+        self.debug(data)
+        self._check(data)
+        thread_uuid = data.get('threadUuid')
+        self.log.debug(thread_uuid)
+        url = "threads/%(t_uuid)s/members" % {
+            't_uuid': thread_uuid,
+        }
+        return self.core.create(url, data)

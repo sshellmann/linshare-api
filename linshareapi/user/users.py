@@ -66,6 +66,15 @@ class Users(GenericClass):
     def list(self):
         return self.core.list("users")
 
+    @Time('get')
+    def get(self, mail):
+        """ Get one document store into LinShare."""
+        users = (v for v in self.list() if v.get('mail') == mail)
+        for i in users:
+            self.log.debug(i)
+            return i
+        return None
+
     def get_rbu(self):
         rbu = ResourceBuilder("users")
         rbu.add_field('firstName', required=True)
@@ -88,3 +97,8 @@ class Users(GenericClass):
         #rbu.add_field("locale", extended = True)
         #rbu.add_field("externalMailLocale", extended = True)
         return rbu
+
+
+# -----------------------------------------------------------------------------
+class Users2(Users):
+    pass
