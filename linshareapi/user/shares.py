@@ -30,6 +30,7 @@ from __future__ import unicode_literals
 import urllib2
 import datetime
 
+from linshareapi.core import ResourceBuilder
 from linshareapi.cache import Cache as CCache
 from linshareapi.cache import Invalid as IInvalid
 from linshareapi.user.core import GenericClass
@@ -89,3 +90,35 @@ class Shares(GenericClass):
                         "time": self.core.last_req_time})
         self.log.debug("the result is : " + str(code) + " : " + msg)
         return (code, msg, self.core.last_req_time)
+
+
+# -----------------------------------------------------------------------------
+class Shares2(Shares):
+
+    def get_rbu(self):
+        rbu = ResourceBuilder("shares")
+        rbu.add_field('secured', e_type=bool)
+        rbu.add_field('expirationDate')
+        rbu.add_field('subject')
+        rbu.add_field('message')
+        # [document uuids,]
+        rbu.add_field('documents', required=True)
+        # [GenericUserDto,]
+        rbu.add_field('recipients',required=True)
+        return rbu
+
+    def get_rbu_user(self):
+        rbu = ResourceBuilder("GenericUserDto")
+        rbu.add_field('mail')
+        rbu.add_field('uuid')
+        rbu.add_field('domain')
+        rbu.add_field('firstName')
+        rbu.add_field('lastName')
+        return rbu
+
+    @Time('create')
+    @Invalid()
+    def create(self, data):
+        self.debug(data)
+        self._check(data)
+        return self.core.create("shares", data)

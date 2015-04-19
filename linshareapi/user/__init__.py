@@ -38,6 +38,7 @@ from linshareapi.user.rshares import ReceivedShares2
 from linshareapi.user.threads import Threads2
 from linshareapi.user.threadmembers import ThreadsMembers2
 from linshareapi.user.users import Users2
+from linshareapi.user.shares import Shares2
 
 
 # -----------------------------------------------------------------------------
@@ -75,3 +76,4 @@ class UserCli(CoreCli):
             self.rshares = ReceivedShares2(self)
             self.threads = Threads2(self)
             self.thread_members = ThreadsMembers2(self)
+            self.shares = Shares2(self)
