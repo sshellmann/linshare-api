@@ -69,7 +69,7 @@ class ThreadsMembers(GenericClass):
 
     @Time('delete')
     @Invalid()
-    def delete(self, uuid):
+    def delete(self, thread_uuid, uuid):
         self.log.warn("Not implemented yed")
 
     @Time('invalid')
