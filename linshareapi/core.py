@@ -502,11 +502,10 @@ This method could throw exceptions like urllib2.HTTPError."""
             content_lenth = resultq.info().getheader('Content-Length')
             if not content_lenth:
                 msg = "No content lengh header found !"
-                self.log.error(msg)
-                result = resultq.read()
-                self.log.error(result)
-                raise LinShareException("-1", msg)
-            file_size = int(resultq.info().getheader('Content-Length').strip())
+                self.log.debug(msg)
+                progress_bar = False
+            else:
+                file_size = int(content_lenth.strip())
             if forced_file_name:
                 file_name = forced_file_name
             else:
