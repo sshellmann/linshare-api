@@ -490,7 +490,8 @@ This method could throw exceptions like urllib2.HTTPError."""
         # Building request
         request = urllib2.Request(url)
         #request.add_header('Content-Type', 'application/json; charset=UTF-8')
-        request.add_header('Accept', 'application/json;charset=UTF-8')
+        #request.add_header('Accept', 'application/json;charset=UTF-8')
+        request.add_header('Accept', '*/*; charset=UTF-8')
         # request start
         starttime = datetime.datetime.now()
         # doRequest
@@ -510,8 +511,9 @@ This method could throw exceptions like urllib2.HTTPError."""
                 file_name = forced_file_name
             else:
                 content_dispo = resultq.info().getheader('Content-disposition')
-                content_dispo = content_dispo.strip()
-                file_name = extract_file_name(content_dispo)
+                if content_dispo:
+                    content_dispo = content_dispo.strip()
+                    file_name = extract_file_name(content_dispo)
             if directory:
                 if os.path.isdir(directory):
                     file_name = directory + "/" + file_name
