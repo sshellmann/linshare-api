@@ -58,6 +58,15 @@ class Invalid(IInvalid):
 
 class DomainPatterns(GenericClass):
 
+    @Time('get')
+    def get(self, identifier):
+        """ Get one document store into LinShare."""
+        documents = (v for v in self.list() if v.get('identifier') == identifier)
+        for i in documents:
+            self.log.debug(i)
+            return i
+        return None
+
     @Time('list')
     @Cache(arguments=True)
     def list(self, model=False):
@@ -91,12 +100,54 @@ class DomainPatterns(GenericClass):
             identifier = identifier.strip(" ")
         if not identifier:
             raise ValueError("identifier is required")
+        res = self.get(identifier)
+        self.debug(res)
         data = {"identifier":  identifier}
-        return self.core.delete("domain_patterns", data)
+        self.core.delete("domain_patterns", data)
+        return res
 
     def get_rbu(self):
         rbu = ResourceBuilder("domain_patterns", required=True)
         rbu.add_field('identifier')
+        rbu.add_field('description', value="")
+        rbu.add_field('userFirstName', 'first_name', extended=True)
+        rbu.add_field('userLastName', 'last_name', extended=True)
+        rbu.add_field('userMail', 'mail', extended=True)
+        rbu.add_field('ldapUid', extended=True)
+        rbu.add_field("authCommand", extended=True)
+        rbu.add_field("searchUserCommand", extended=True)
+        rbu.add_field("autoCompleteCommandOnAllAttributes", extended=True)
+        rbu.add_field("autoCompleteCommandOnFirstAndLastName", extended=True)
+        rbu.add_field('completionPageSize', extended=True, e_type=int)
+        rbu.add_field('completionSizeLimit', extended=True, e_type=int)
+        rbu.add_field('searchPageSize', extended=True, e_type=int)
+        rbu.add_field('searchSizeLimit', extended=True, e_type=int)
+        return rbu
+
+class DomainPatterns2(DomainPatterns):
+
+    @Time('delete')
+    @Invalid(whole_familly=True)
+    def delete(self, uuid):
+        if uuid:
+            uuid = uuid.strip(" ")
+        if not uuid:
+            raise ValueError("uuid is required")
+        res = self.get(uuid)
+        data = {"uuid":  uuid}
+        self.core.delete("domain_patterns", data)
+        return res
+
+    @Time('get')
+    @Cache()
+    def get(self, uuid):
+        """ Get one document."""
+        return self.core.get("domain_patterns/%s" % uuid)
+
+    def get_rbu(self):
+        rbu = ResourceBuilder("domain_patterns", required=True)
+        rbu.add_field('uuid')
+        rbu.add_field('label', required=True)
         rbu.add_field('description', value="")
         rbu.add_field('userFirstName', 'first_name', extended=True)
         rbu.add_field('userLastName', 'last_name', extended=True)

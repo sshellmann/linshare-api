@@ -59,6 +59,15 @@ class Invalid(IInvalid):
 # -----------------------------------------------------------------------------
 class LdapConnections(GenericClass):
 
+    @Time('get')
+    def get(self, identifier):
+        """ Get one document store into LinShare."""
+        documents = (v for v in self.list() if v.get('identifier') == identifier)
+        for i in documents:
+            self.log.debug(i)
+            return i
+        return None
+
     @Time('list')
     @Cache()
     def list(self):
@@ -84,12 +93,45 @@ class LdapConnections(GenericClass):
             identifier = identifier.strip(" ")
         if not identifier:
             raise ValueError("identifier is required")
+        res = self.get(identifier)
+        self.debug(res)
         data = {"identifier":  identifier}
-        return self.core.delete("ldap_connections", data)
+        self.core.delete("ldap_connections", data)
+        return res
 
     def get_rbu(self):
         rbu = ResourceBuilder("ldap_connection")
         rbu.add_field('identifier', required=True)
+        rbu.add_field('providerUrl', required=True)
+        rbu.add_field('securityPrincipal', "principal")
+        rbu.add_field('securityCredentials', "credential")
+        return rbu
+
+
+# -----------------------------------------------------------------------------
+class LdapConnections2(LdapConnections):
+
+    @Time('get')
+    @Cache()
+    def get(self, uuid):
+        return self.core.get("ldap_connections/%s" % uuid)
+
+    @Time('delete')
+    @Invalid(whole_familly=True)
+    def delete(self, uuid):
+        if uuid:
+            uuid = uuid.strip(" ")
+        if not uuid:
+            raise ValueError("uuid is required")
+        res = self.get(uuid)
+        data = {"uuid":  uuid}
+        self.core.delete("ldap_connections", data)
+        return res
+
+    def get_rbu(self):
+        rbu = ResourceBuilder("ldap_connection")
+        rbu.add_field('uuid')
+        rbu.add_field('label', required=True)
         rbu.add_field('providerUrl', required=True)
         rbu.add_field('securityPrincipal', "principal")
         rbu.add_field('securityCredentials', "credential")

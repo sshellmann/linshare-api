@@ -109,6 +109,10 @@ class Domains(GenericClass):
     def options_language(self):
         return self.core.options("enums/language")
 
+    @CCache(CM, 'domain-lang-mail', cache_duration=3600)
+    def options_mail_language(self):
+        return self.core.options("enums/language")
+
     def options_role(self):
         # pylint: disable=R0201
         return ['ADMIN', 'SIMPLE']
@@ -136,4 +140,39 @@ class Domains(GenericClass):
         rbu.add_field('description', value="")
         rbu.add_field('authShowOrder', value="1", extended=True)
         rbu.add_field('providers', value=[], extended=True)
+        return rbu
+
+
+# -----------------------------------------------------------------------------
+class Domains2(Domains):
+
+    @Time('get')
+    @Cache()
+    def get(self, identifier):
+        """ Get one domain."""
+        return self.core.get("domains/" + identifier)
+
+    def get_rbu(self):
+        rbu = ResourceBuilder("domains")
+        rbu.add_field('identifier', required=True)
+        rbu.add_field('label', required=True)
+        rbu.add_field('policy', value={"identifier": "DefaultDomainPolicy"},
+                      hidden=True)
+        rbu.add_field('type', "domain_type", value="TOPDOMAIN")
+        rbu.add_field('parent', "parent_id")
+        rbu.add_field('language', value="ENGLISH")
+        rbu.add_field('userRole', "role", value="SIMPLE")
+        rbu.add_field('mailConfigUuid',
+                      value="946b190d-4c95-485f-bfe6-d288a2de1edd",
+                      extended=True)
+        rbu.add_field('mimePolicyUuid',
+                      value="3d6d8800-e0f7-11e3-8ec0-080027c0eef0",
+                      extended=True)
+        rbu.add_field('description', value="")
+        rbu.add_field('authShowOrder', value="1", extended=True)
+        rbu.add_field('providers', value=[], extended=True)
+        rbu.add_field('externalMailLocale', value="ENGLISH")
+        rbu.add_field('currentWelcomeMessages',
+                       value={'uuid':"4bc57114-c8c9-11e4-a859-37b5db95d856"},
+                       extended=True)
         return rbu

@@ -27,12 +27,15 @@
 from linshareapi.core import CoreCli
 from linshareapi.core import ApiNotImplementedYet as ANIY
 from linshareapi.admin.domains import Domains
+from linshareapi.admin.domains import Domains2
 from linshareapi.admin.domainpatterns import DomainPatterns
+from linshareapi.admin.domainpatterns import DomainPatterns2
 from linshareapi.admin.functionalities import Functionalities
 from linshareapi.admin.threads import  Threads
 from linshareapi.admin.threadmembers import ThreadsMembers
 from linshareapi.admin.users import Users
 from linshareapi.admin.ldapconnections import LdapConnections
+from linshareapi.admin.ldapconnections import LdapConnections2
 from linshareapi.admin.domainpolicies import DomainPolicies
 
 
@@ -40,8 +43,8 @@ from linshareapi.admin.domainpolicies import DomainPolicies
 class AdminCli(CoreCli):
     # pylint: disable=R0902
 
-    VERSION = 0
-    VERSIONS = [0, ]
+    VERSION = 1
+    VERSIONS = [0, 1]
 
     def __init__(self, host, user, password, verbose, debug, api_version=None):
         super(AdminCli, self).__init__(host, user, password, verbose, debug)
@@ -67,5 +70,14 @@ class AdminCli(CoreCli):
             self.domains = Domains(self)
             self.ldap_connections = LdapConnections(self)
             self.domain_patterns = DomainPatterns(self)
+            self.funcs = Functionalities(self)
+            self.domain_policies = DomainPolicies(self)
+        elif api_version == 1:
+            self.threads = Threads(self)
+            self.thread_members = ThreadsMembers(self)
+            self.users = Users(self)
+            self.domains = Domains2(self)
+            self.ldap_connections = LdapConnections2(self)
+            self.domain_patterns = DomainPatterns2(self)
             self.funcs = Functionalities(self)
             self.domain_policies = DomainPolicies(self)

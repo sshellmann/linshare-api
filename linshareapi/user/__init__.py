@@ -46,7 +46,7 @@ from linshareapi.user.shares import Shares2
 # -----------------------------------------------------------------------------
 class UserCli(CoreCli):
 
-    VERSION = 0
+    VERSION = 1
     VERSIONS = [0, 1]
 
     def __init__(self, host, user, password, verbose, debug, api_version=None):

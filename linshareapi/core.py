@@ -211,10 +211,11 @@ class CoreCli(object):
                 self.log.debug("auth url : ok")
                 return True
         except urllib2.HTTPError as ex:
+            msg = ex.msg.decode('unicode-escape').strip('"')
             if ex.code == 401:
-                self.log.error(ex.msg + " (" + str(ex.code) + ")")
+                self.log.error(msg + " (" + str(ex.code) + ")")
             else:
-                self.log.error(ex.msg + " (" + str(ex.code) + ")")
+                self.log.error(msg + " (" + str(ex.code) + ")")
         return False
 
     def add_auth_header(self, request):
@@ -260,7 +261,25 @@ class CoreCli(object):
                 json_obj = True
         except urllib2.HTTPError as ex:
             code = "-1"
-            msg = "Http error : " + ex.msg + " (" + str(ex.code) + ")"
+            if self.debug >=3:
+                print "---------- exception -----------"
+                import sys
+                sys.stderr.write(str(type(ex)))
+                sys.stderr.write("\n")
+                sys.stderr.write(str(dir(ex)))
+                sys.stderr.write("\n")
+                sys.stderr.write(str(ex.headers))
+                sys.stderr.write("\n")
+                sys.stderr.write(str(type(ex.msg)))
+                sys.stderr.write("\n")
+                sys.stderr.write(str(ex))
+                sys.stderr.write("\n")
+                sys.stderr.write(ex.msg.decode('unicode-escape').strip('"'))
+                sys.stderr.write("\n")
+                sys.stderr.write("\n")
+                print "--------------------------------"
+            msg = ex.msg.decode('unicode-escape').strip('"')
+            msg = "Http error : " + msg + " (" + str(ex.code) + ")"
             if self.verbose:
                 self.log.info(msg)
             else:
@@ -440,12 +459,13 @@ because its size is less or equal to zero." % {"filename": str(file_name)}
             if code == 200:
                 json_obj = self.get_json_result(resultq)
         except urllib2.HTTPError as ex:
+            msg = ex.msg.decode('unicode-escape').strip('"')
             if self.verbose:
                 self.log.info(
-                    "Http error : " + ex.msg + " (" + str(ex.code) + ")")
+                    "Http error : " + msg + " (" + str(ex.code) + ")")
             else:
                 self.log.debug(
-                    "Http error : " + ex.msg + " (" + str(ex.code) + ")")
+                    "Http error : " + msg + " (" + str(ex.code) + ")")
             json_obj = self.get_json_result(ex)
             code = json_obj.get('errCode')
             msg = json_obj.get('message')
