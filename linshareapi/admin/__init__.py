@@ -34,6 +34,7 @@ from linshareapi.admin.functionalities import Functionalities
 from linshareapi.admin.threads import  Threads
 from linshareapi.admin.threadmembers import ThreadsMembers
 from linshareapi.admin.users import Users
+from linshareapi.admin.iusers import InconsistentUsers
 from linshareapi.admin.ldapconnections import LdapConnections
 from linshareapi.admin.ldapconnections import LdapConnections2
 from linshareapi.admin.domainpolicies import DomainPolicies
@@ -57,6 +58,7 @@ class AdminCli(CoreCli):
         self.threads = ANIY(self, api_version, "threads")
         self.thread_members = ANIY(self, api_version, "thread_members")
         self.users = ANIY(self, api_version, "users")
+        self.iusers = ANIY(self, api_version, "iusers")
         self.domains = ANIY(self, api_version, "domains")
         self.ldap_connections = ANIY(self, api_version, "ldap_connections")
         self.domain_patterns = ANIY(self, api_version, "domain_patterns")
@@ -67,6 +69,7 @@ class AdminCli(CoreCli):
             self.threads = Threads(self)
             self.thread_members = ThreadsMembers(self)
             self.users = Users(self)
+            self.iusers = InconsistentUsers(self)
             self.domains = Domains(self)
             self.ldap_connections = LdapConnections(self)
             self.domain_patterns = DomainPatterns(self)
@@ -76,6 +79,7 @@ class AdminCli(CoreCli):
             self.threads = Threads(self)
             self.thread_members = ThreadsMembers(self)
             self.users = Users(self)
+            self.iusers = InconsistentUsers(self)
             self.domains = Domains2(self)
             self.ldap_connections = LdapConnections2(self)
             self.domain_patterns = DomainPatterns2(self)
