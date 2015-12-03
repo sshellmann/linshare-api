@@ -29,6 +29,7 @@ from __future__ import unicode_literals
 
 import os
 import re
+import sys
 import logging
 import logging.handlers
 import base64
@@ -263,7 +264,6 @@ class CoreCli(object):
             code = "-1"
             if self.debug >=3:
                 print "---------- exception -----------"
-                import sys
                 sys.stderr.write(str(type(ex)))
                 sys.stderr.write("\n")
                 sys.stderr.write(str(dir(ex)))
@@ -284,12 +284,16 @@ class CoreCli(object):
                 self.log.info(msg)
             else:
                 self.log.debug(msg)
-            if ex.code == 400 or ex.code == 403:
+            if ex.code == 400 or ex.code == 403 or ex.code == 404:
                 json_obj = self.get_json_result(ex)
                 code = json_obj.get('errCode')
                 msg = json_obj.get('message')
                 self.log.debug("Server error code : " + str(code))
                 self.log.debug("Server error message : " + str(msg))
+            else:
+                if self.debug >=3:
+                    sys.stderr.write("payload : " + ex.read())
+                    sys.stderr.write("\n")
             # request end
             endtime = datetime.datetime.now()
             self.last_req_time = str(endtime - starttime)
