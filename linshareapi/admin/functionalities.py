@@ -98,8 +98,11 @@ class Functionalities(GenericClass):
         rbu = ResourceBuilder("functionality")
         rbu.add_field('identifier', required=True)
         rbu.add_field('type')
-        rbu.add_field('parentAllowParametersUpdate')
-        rbu.add_field('parameters', extended=True)
+        rbu.add_field('activationPolicy', required=False)
+        rbu.add_field('configurationPolicy', extended=True, required=False)
+        rbu.add_field('delegationPolicy', extended=True, required=False)
+        rbu.add_field('parameters')
         rbu.add_field('parentIdentifier', extended=True)
         rbu.add_field('domain', extended=True, required=True)
+        rbu.add_field('parentAllowParametersUpdate', extended=True)
         return rbu
