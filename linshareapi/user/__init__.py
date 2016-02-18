@@ -80,3 +80,4 @@ class UserCli(CoreCli):
             self.thread_members = ThreadsMembers2(self)
             self.thread_entries = ThreadEntries(self)
             self.shares = Shares2(self)
+        self.init_handlers()

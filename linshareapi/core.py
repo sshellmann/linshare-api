@@ -30,6 +30,8 @@ from __future__ import unicode_literals
 import os
 import re
 import sys
+import pickle
+import hashlib
 import logging
 import logging.handlers
 import base64
@@ -51,6 +53,38 @@ class LinShareException(Exception):
 #        super(LinShareException, self).__init__(*args, **kwargs)
 #        self.code = code
 #        self.msg = msg
+
+class HTTPBasicAuthHandler(urllib2.HTTPBasicAuthHandler):
+
+    def __init__(self, root_url, username, cookiejar, password_mgr=None):
+        urllib2.HTTPBasicAuthHandler.__init__(self, password_mgr=password_mgr)
+        self.cookiejar = cookiejar
+        directory = os.path.expanduser('~/.linshare-cookies')
+        if not os.path.isdir(directory):
+            os.makedirs(directory)
+        hash_key = hashlib.sha256()
+        hash_key.update(root_url)
+        hash_key.update(username)
+        self.hash_key = os.path.join(
+             directory,
+             hash_key.hexdigest()
+        )
+
+    def http_error_401(self, req, fp, code, msg, headers):
+        print "fred is back : " +  str(self.retried)
+        if self.retried >= 1:
+            print "pourst"
+            import getpass
+            print self.passwd.passwd
+            password = getpass.getpass("Please enter your password :")
+
+            self.passwd.passwd = {'Name Of Your LinShare Realm': {(('192.168.1.106:8080', '/linshare/webservice/rest/user/'),): ('homer.simpson@nodomain.com', password)}}
+
+        response = urllib2.HTTPBasicAuthHandler.http_error_401(
+            self, req, fp, code, msg, headers)
+        self.cookiejar.save(self.hash_key)
+        return response
+
 
 # -----------------------------------------------------------------------------
 def extract_file_name(content_dispo):
@@ -116,14 +150,36 @@ class ApiNotImplementedYet(object):
         raise NotImplementedError(
             "The current end point '%(api)s' is not supported in the api \
 version '%(version)s'." % {
-                'api' : self.end_point,
-                'version' : self.version})
+                'api': self.end_point,
+                'version': self.version})
+
+
+# -----------------------------------------------------------------------------
+class FileCookieJar(cookielib.FileCookieJar):
+
+    def save(self, filename=None, ignore_discard=False, ignore_expires=False):
+        cookie_file = open(filename, "w")
+        try:
+            for cookie in self:
+                pickle.dump(cookie, cookie_file)
+        finally:
+            cookie_file.close()
+
+    def load(self, filename=None, ignore_discard=False, ignore_expires=False):
+        if not os.path.isfile(filename):
+            return
+        cookie_file = open(filename, "r")
+        try:
+            cookie = pickle.load(cookie_file)
+            self.set_cookie(cookie)
+        finally:
+            cookie_file.close()
 
 
 # -----------------------------------------------------------------------------
 class CoreCli(object):
 
-    # pylint: disable=R0902
+    # pylint: disable=too-many-arguments
     def __init__(self, host, user, password, verbose=False, debug=0,
                  realm="Name Of Your LinShare Realm"):
         classname = str(self.__class__.__name__.lower())
@@ -133,6 +189,7 @@ class CoreCli(object):
         self.password = password
         self.host = host
         self.user = user
+        self.realm = realm
         self.last_req_time = None
         self.cache_time = 60
         self.nocache = False
@@ -141,34 +198,47 @@ class CoreCli(object):
             raise ValueError("invalid host : host url is not set !")
         if not user:
             raise ValueError("invalid user : " + str(user))
-        if not password:
-            raise ValueError("invalid password : password is not set ! ")
+        #if not password:
+        #    raise ValueError("invalid password : password is not set ! ")
         if not realm:
-            realm = "Name Of Your LinShare Realm"
-        self.debuglevel = 0
+            self.realm = "Name Of Your LinShare Realm"
         # 0 : debug off
         # 1 : debug on
         # 2 : debug on, request result is printed (pretty json)
         # 3 : debug on, urllib debug on,  http headers and request are printed
-        httpdebuglevel = 0
+        self.debuglevel = 0
         if self.debug:
             try:
                 self.debuglevel = int(self.debug)
             except ValueError:
                 self.debuglevel = 1
+        self.root_url = None
+        self.cookiejar = None
 
-            if self.debuglevel >= 3:
-                httpdebuglevel = 1
+    def init_handlers(self):
+        httpdebuglevel = 0
+        if self.debuglevel >= 3:
+            httpdebuglevel = 1
+        # root url
+        self.root_url = self.host
+        if self.root_url[-1] != "/":
+            self.root_url += "/"
+        self.root_url += self.base_url
+        if self.root_url[-1] != "/":
+            self.root_url += "/"
+        self.log.debug("root_url : " + self.root_url)
         # We declare all the handlers useful here.
-        auth_handler = urllib2.HTTPBasicAuthHandler()
+        self.cookiejar = FileCookieJar()
+        auth_handler = HTTPBasicAuthHandler(self.root_url, self.user, self.cookiejar)
+        #auth_handler = urllib2.HTTPBasicAuthHandler()
         # we convert unicode objects to utf8 strings because
         # the authentication module does not handle unicode
         try:
             auth_handler.add_password(
-                realm=realm.encode('utf8'),
-                uri=host.encode('utf8'),
-                user=user.encode('utf8'),
-                passwd=password.encode('utf8'))
+                realm=self.realm.encode('utf8'),
+                uri=self.root_url.encode('utf8'),
+                user=self.user.encode('utf8'),
+                passwd=self.password.encode('utf8'))
         except UnicodeEncodeError:
             self.log.error(
                 "the program was not able to compute "
@@ -182,10 +252,18 @@ class CoreCli(object):
             poster.streaminghttp.StreamingHTTPHandler(
                 debuglevel=httpdebuglevel),
             poster.streaminghttp.StreamingHTTPRedirectHandler(),
-            urllib2.HTTPCookieProcessor(cookielib.CookieJar())]
+            urllib2.HTTPCookieProcessor(self.cookiejar)]
         # Setting handlers
-        # pylint: disable=W0142
+        # pylint: disable=star-args
         urllib2.install_opener(urllib2.build_opener(*handlers))
+
+        if True:
+            directory = os.path.expanduser('~/.linshare-cookies')
+            if not os.path.isdir(directory):
+                os.makedirs(directory)
+            self.cookiejar.load(os.path.join(
+                directory,
+                self.get_cookie_filename()))
 
     def get_full_url(self, url_frament):
         root_url = self.host
@@ -197,7 +275,15 @@ class CoreCli(object):
         root_url += url_frament
         return root_url
 
-    def auth(self):
+    def get_cookie_filename(self):
+        hash_key = hashlib.sha256()
+        hash_key.update(self.root_url)
+        hash_key.update(self.user)
+        hash_key = hash_key.hexdigest()
+        self.log.debug("cookie_filename: " + hash_key)
+        return hash_key
+
+    def auth(self, save_cookie=False):
         url = self.get_full_url("authentication/authorized")
         self.log.debug("list url : " + url)
         # Building request
@@ -210,7 +296,14 @@ class CoreCli(object):
             code = resultq.getcode()
             if code == 200:
                 self.log.debug("auth url : ok")
-                return True
+                if save_cookie:
+                    directory = os.path.expanduser('~/.linshare-cookies')
+                    if not os.path.isdir(directory):
+                        os.makedirs(directory)
+                    self.cookiejar.save(os.path.join(
+                        directory,
+                        self.get_cookie_filename())
+                    )
         except urllib2.HTTPError as ex:
             msg = ex.msg.decode('unicode-escape').strip('"')
             if ex.code == 401:
@@ -262,7 +355,7 @@ class CoreCli(object):
                 json_obj = True
         except urllib2.HTTPError as ex:
             code = "-1"
-            if self.debug >=3:
+            if self.debug >= 3:
                 print "---------- exception -----------"
                 sys.stderr.write(str(type(ex)))
                 sys.stderr.write("\n")
@@ -291,7 +384,7 @@ class CoreCli(object):
                 self.log.debug("Server error code : " + str(code))
                 self.log.debug("Server error message : " + str(msg))
             else:
-                if self.debug >=3:
+                if self.debug >= 3:
                     sys.stderr.write("payload : " + ex.read())
                     sys.stderr.write("\n")
             # request end
@@ -430,8 +523,7 @@ class CoreCli(object):
             file_name = os.path.basename(file_path)
         self.log.debug("file_name is : " + file_name)
         if file_size <= 0:
-            msg = "The file '%(filename)s' can not be uploaded \
-because its size is less or equal to zero." % {"filename": str(file_name)}
+            msg = u"The file '%(filename)s' can not be uploaded  because its size is less or equal to zero." % {"filename": file_name}
             raise LinShareException("-1", msg)
         pbar = None
         stream = file(file_path, 'rb')

@@ -85,3 +85,4 @@ class AdminCli(CoreCli):
             self.domain_patterns = DomainPatterns2(self)
             self.funcs = Functionalities(self)
             self.domain_policies = DomainPolicies(self)
+        self.init_handlers()
