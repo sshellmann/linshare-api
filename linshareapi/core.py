@@ -54,38 +54,6 @@ class LinShareException(Exception):
 #        self.code = code
 #        self.msg = msg
 
-class HTTPBasicAuthHandler(urllib2.HTTPBasicAuthHandler):
-
-    def __init__(self, root_url, username, cookiejar, password_mgr=None):
-        urllib2.HTTPBasicAuthHandler.__init__(self, password_mgr=password_mgr)
-        self.cookiejar = cookiejar
-        directory = os.path.expanduser('~/.linshare-cookies')
-        if not os.path.isdir(directory):
-            os.makedirs(directory)
-        hash_key = hashlib.sha256()
-        hash_key.update(root_url)
-        hash_key.update(username)
-        self.hash_key = os.path.join(
-             directory,
-             hash_key.hexdigest()
-        )
-
-    def http_error_401(self, req, fp, code, msg, headers):
-        print "fred is back : " +  str(self.retried)
-        if self.retried >= 1:
-            print "pourst"
-            import getpass
-            print self.passwd.passwd
-            password = getpass.getpass("Please enter your password :")
-
-            self.passwd.passwd = {'Name Of Your LinShare Realm': {(('192.168.1.106:8080', '/linshare/webservice/rest/user/'),): ('homer.simpson@nodomain.com', password)}}
-
-        response = urllib2.HTTPBasicAuthHandler.http_error_401(
-            self, req, fp, code, msg, headers)
-        self.cookiejar.save(self.hash_key)
-        return response
-
-
 # -----------------------------------------------------------------------------
 def extract_file_name(content_dispo):
     """Extract file name from the input request body"""
@@ -155,71 +123,32 @@ version '%(version)s'." % {
 
 
 # -----------------------------------------------------------------------------
-class FileCookieJar(cookielib.FileCookieJar):
-
-    def save(self, filename=None, ignore_discard=False, ignore_expires=False):
-        cookie_file = open(filename, "w")
-        try:
-            for cookie in self:
-                pickle.dump(cookie, cookie_file)
-        finally:
-            cookie_file.close()
-
-    def load(self, filename=None, ignore_discard=False, ignore_expires=False):
-        if not os.path.isfile(filename):
-            return
-        cookie_file = open(filename, "r")
-        try:
-            cookie = pickle.load(cookie_file)
-            self.set_cookie(cookie)
-        finally:
-            cookie_file.close()
-
-
-# -----------------------------------------------------------------------------
 class CoreCli(object):
 
-    # pylint: disable=too-many-arguments
-    def __init__(self, host, user, password, verbose=False, debug=0,
-                 realm="Name Of Your LinShare Realm"):
+    def __init__(self, host, user, verbose=False, debug=0):
         classname = str(self.__class__.__name__.lower())
         self.log = logging.getLogger('linshareapi.' + classname)
         self.verbose = verbose
         self.debug = debug
-        self.password = password
+        self.password = None
         self.host = host
         self.user = user
-        self.realm = realm
+        self.realm = "Name Of Your LinShare Realm"
         self.last_req_time = None
         self.cache_time = 60
         self.nocache = False
         self.base_url = ""
-        if not host:
-            raise ValueError("invalid host : host url is not set !")
-        if not user:
-            raise ValueError("invalid user : " + str(user))
-        #if not password:
-        #    raise ValueError("invalid password : password is not set ! ")
-        if not realm:
-            self.realm = "Name Of Your LinShare Realm"
         # 0 : debug off
         # 1 : debug on
         # 2 : debug on, request result is printed (pretty json)
         # 3 : debug on, urllib debug on,  http headers and request are printed
         self.debuglevel = 0
-        if self.debug:
-            try:
-                self.debuglevel = int(self.debug)
-            except ValueError:
-                self.debuglevel = 1
         self.root_url = None
-        self.cookiejar = None
+        self.cookiejar = cookielib.CookieJar()
 
-    def init_handlers(self):
-        httpdebuglevel = 0
-        if self.debuglevel >= 3:
-            httpdebuglevel = 1
-        # root url
+    def _init_root_url(self):
+        if not self.host:
+            raise ValueError("invalid host : host url is not set !")
         self.root_url = self.host
         if self.root_url[-1] != "/":
             self.root_url += "/"
@@ -227,12 +156,16 @@ class CoreCli(object):
         if self.root_url[-1] != "/":
             self.root_url += "/"
         self.log.debug("root_url : " + self.root_url)
+
+    def _init_handlers(self, auth_handler=None):
+        httpdebug = 0
+        if self.debuglevel >= 3:
+            httpdebug = 1
         # We declare all the handlers useful here.
-        self.cookiejar = FileCookieJar()
-        auth_handler = HTTPBasicAuthHandler(self.root_url, self.user, self.cookiejar)
-        #auth_handler = urllib2.HTTPBasicAuthHandler()
         # we convert unicode objects to utf8 strings because
         # the authentication module does not handle unicode
+        if not auth_handler:
+            auth_handler = urllib2.HTTPBasicAuthHandler()
         try:
             auth_handler.add_password(
                 realm=self.realm.encode('utf8'),
@@ -244,26 +177,32 @@ class CoreCli(object):
                 "the program was not able to compute "
                 + "the basic authentication token.")
         handlers = [
-            poster.streaminghttp.StreamingHTTPSHandler(
-                debuglevel=httpdebuglevel),
+            poster.streaminghttp.StreamingHTTPSHandler(debuglevel=httpdebug),
             auth_handler,
-            urllib2.HTTPSHandler(debuglevel=httpdebuglevel),
-            urllib2.HTTPHandler(debuglevel=httpdebuglevel),
+            urllib2.HTTPSHandler(debuglevel=httpdebug),
+            urllib2.HTTPHandler(debuglevel=httpdebug),
             poster.streaminghttp.StreamingHTTPHandler(
-                debuglevel=httpdebuglevel),
+                debuglevel=httpdebug),
             poster.streaminghttp.StreamingHTTPRedirectHandler(),
             urllib2.HTTPCookieProcessor(self.cookiejar)]
         # Setting handlers
         # pylint: disable=star-args
         urllib2.install_opener(urllib2.build_opener(*handlers))
 
-        if True:
-            directory = os.path.expanduser('~/.linshare-cookies')
-            if not os.path.isdir(directory):
-                os.makedirs(directory)
-            self.cookiejar.load(os.path.join(
-                directory,
-                self.get_cookie_filename()))
+    def init_cli(self, auth_handler=None):
+        self._init_root_url()
+        if not self.user:
+            raise ValueError("invalid user : " + str(self.user))
+        if not self.password:
+            raise ValueError("invalid password : password is not set ! ")
+        if not self.realm:
+            self.realm = "Name Of Your LinShare Realm"
+        if self.debug:
+            try:
+                self.debuglevel = int(self.debug)
+            except ValueError:
+                self.debuglevel = 1
+        self._init_handlers(auth_handler)
 
     def get_full_url(self, url_frament):
         root_url = self.host
@@ -599,7 +538,7 @@ class CoreCli(object):
                  progress_bar=True, chunk_size=256,
                  directory=None, overwrite=False):
         """ download a file from LinShare using its rest api.
-This method could throw exceptions like urllib2.HTTPError."""
+        This method could throw exceptions like urllib2.HTTPError."""
         self.last_req_time = None
         url = self.get_full_url(url)
         self.log.debug("download url : " + url)

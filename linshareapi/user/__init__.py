@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with LinShare api.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Copyright 2014 Frédéric MARTIN
+# Copyright 2014-2016 Frédéric MARTIN
 #
 # Contributors list :
 #
@@ -42,15 +42,15 @@ from linshareapi.user.users import Users2
 from linshareapi.user.shares import Shares2
 
 
-
-# -----------------------------------------------------------------------------
 class UserCli(CoreCli):
+    """TODO"""
 
     VERSION = 1
     VERSIONS = [0, 1]
 
-    def __init__(self, host, user, password, verbose, debug, api_version=None):
-        super(UserCli, self).__init__(host, user, password, verbose, debug)
+# pylint: disable=too-many-arguments
+    def __init__(self, host, user, verbose, debug, api_version=None):
+        super(UserCli, self).__init__(host, user, verbose, debug)
         if api_version is None:
             api_version = self.VERSION
         if api_version not in self.VERSIONS:
@@ -80,4 +80,3 @@ class UserCli(CoreCli):
             self.thread_members = ThreadsMembers2(self)
             self.thread_entries = ThreadEntries(self)
             self.shares = Shares2(self)
-        self.init_handlers()
