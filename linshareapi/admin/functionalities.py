@@ -61,10 +61,12 @@ class Functionalities(GenericClass):
 
     @Time('list')
     @Cache(arguments=True)
-    def list(self, domain_id=None):
+    def list(self, domain_id=None, only_parents=False):
         if domain_id is None:
             domain_id = "LinShareRootDomain"
-        json_obj = self.core.list("functionalities?domainId=" + domain_id)
+        url = "functionalities?domainId={d}&subs={s!s}"
+        url = url.format(d=domain_id, s=only_parents)
+        json_obj = self.core.list(url)
         return [row for row in json_obj if row.get('displayable') == True]
 
     @Cache(discriminant="get", arguments=True)
@@ -103,6 +105,7 @@ class Functionalities(GenericClass):
         rbu.add_field('delegationPolicy', extended=True, required=False)
         rbu.add_field('parameters')
         rbu.add_field('parentIdentifier', extended=True)
+        #rbu.add_field('functionalities', extended=True)
         rbu.add_field('domain', extended=True, required=True)
         rbu.add_field('parentAllowParametersUpdate', extended=True)
         return rbu
