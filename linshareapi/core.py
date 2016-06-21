@@ -419,7 +419,7 @@ class CoreCli(object):
         return ret
 
     def upload(self, file_path, url, description=None, file_name=None,
-               progress_bar=True):
+               progress_bar=True, http_method='POST'):
         self.last_req_time = None
         url = self.get_full_url(url)
         self.log.debug("upload url : " + url)
@@ -450,6 +450,7 @@ because its size is less or equal to zero." % {"filename": str(file_name)}
         # Building request
         request = urllib2.Request(url, datagen, headers)
         request.add_header('Accept', 'application/json')
+        request.get_method = lambda: http_method
         # request start
         if pbar:
             pbar.start()

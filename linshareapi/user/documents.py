@@ -89,6 +89,14 @@ class Documents(GenericClass):
         url = "documents?async={a}".format(a=async)
         return self.core.upload(file_path, url, description)
 
+    @Time('upload')
+    @Invalid(whole_familly=True)
+    def update_file(self, uuid, file_path, async=False):
+        """ Upload a file to LinShare using its rest api.
+        The uploaded document uuid will be returned"""
+        url = "documents/{u}/upload?async={a}".format(u=uuid, a=async)
+        return self.core.upload(file_path, url, http_method='PUT')
+
     @Time('download')
     def download(self, uuid, directory=None):
         url = "documents/{u}/download".format(u=uuid)
