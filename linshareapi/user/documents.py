@@ -83,14 +83,15 @@ class Documents(GenericClass):
 
     @Time('upload')
     @Invalid(whole_familly=True)
-    def upload(self, file_path, description=None):
+    def upload(self, file_path, description=None, async=False):
         """ Upload a file to LinShare using its rest api.
         The uploaded document uuid will be returned"""
-        return self.core.upload(file_path, "documents", description)
+        url = "documents?async={a}".format(a=async)
+        return self.core.upload(file_path, url, description)
 
     @Time('download')
     def download(self, uuid, directory=None):
-        url = "documents/%s/download" % uuid
+        url = "documents/{u}/download".format(u=uuid)
         return self.core.download(uuid, url, directory=directory)
 
     @Time('delete')
