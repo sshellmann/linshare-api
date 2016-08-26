@@ -34,24 +34,29 @@ from linshareapi.admin.core import GenericClass
 from linshareapi.admin.core import Time as CTime
 from linshareapi.admin.core import CM
 
-# pylint: disable=C0111
-# Missing docstring
-# pylint: disable=R0903
-# Too few public methods
+
+# -----------------------------------------------------------------------------
+# global config
+# pylint: disable=missing-docstring
+
+
 # -----------------------------------------------------------------------------
 class Time(CTime):
+    # pylint: disable=too-few-public-methods
     def __init__(self, suffix, **kwargs):
         super(Time, self).__init__('domains.' + suffix, **kwargs)
 
 
 # -----------------------------------------------------------------------------
 class Cache(CCache):
+    # pylint: disable=too-few-public-methods
     def __init__(self, **kwargs):
         super(Cache, self).__init__(CM, 'domains', **kwargs)
 
 
 # -----------------------------------------------------------------------------
 class Invalid(IInvalid):
+    # pylint: disable=too-few-public-methods
     def __init__(self, **kwargs):
         super(Invalid, self).__init__(CM, 'domains', **kwargs)
 
@@ -62,7 +67,7 @@ class Domains(GenericClass):
     @Time('get')
     def get(self, identifier):
         """ Get one domain."""
-        #return self.core.get("domains/" + identifier)
+        # return self.core.get("domains/" + identifier)
         domains = (v for v in self.list() if v.get('identifier') == identifier)
         for i in domains:
             self.log.debug(i)
@@ -84,7 +89,8 @@ class Domains(GenericClass):
         if data.get('type') in ["GUESTDOMAIN", "SUBDOMAIN"]:
             if data.get('parent') is None:
                 raise ValueError(
-                    "parent identifier is required for GuestDomain / SubDomain")
+                    "parent identifier is required for GuestDomain / SubDomain"
+                )
         return self.core.create("domains", data)
 
     @Time('update')
@@ -150,7 +156,8 @@ class Domains2(Domains):
     @Cache()
     def get(self, identifier):
         """ Get one domain."""
-        return self.core.get("domains/" + identifier)
+        url = "domains/{i}".format({"i": identifier})
+        return self.core.get(url)
 
     def get_rbu(self):
         rbu = ResourceBuilder("domains")
@@ -171,8 +178,8 @@ class Domains2(Domains):
         rbu.add_field('description', value="")
         rbu.add_field('authShowOrder', value="1", extended=True)
         rbu.add_field('providers', value=[], extended=True)
-        rbu.add_field('externalMailLocale', value="ENGLISH")
+        # rbu.add_field('externalMailLocale', value="ENGLISH")
         rbu.add_field('currentWelcomeMessages',
-                       value={'uuid':"4bc57114-c8c9-11e4-a859-37b5db95d856"},
-                       extended=True)
+                      value={'uuid': "4bc57114-c8c9-11e4-a859-37b5db95d856"},
+                      extended=True)
         return rbu
