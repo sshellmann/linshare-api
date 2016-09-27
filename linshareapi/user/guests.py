@@ -78,9 +78,8 @@ class Guests(GenericClass):
         rbu.add_field('domain', extended=True)
         rbu.add_field('creationDate', extended=True)
         rbu.add_field('modificationDate', extended=True)
-        # "locale": null,
-        # "externalMailLocale": null,
-        # "restrictedContacts": [ ],
+        rbu.add_field('locale', extended=True)
+        rbu.add_field('externalMailLocale', extended=True)
         return rbu
 
     @Time('list')
