@@ -17,14 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with LinShare api.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Copyright 2014 Frédéric MARTIN
+# Copyright 2014-2016 Frédéric MARTIN
 #
 # Contributors list :
 #
 #  Frédéric MARTIN frederic.martin.fma@gmail.com
 #
 
-__version__ = '0.2.8'
+__version__ = '0.2.9'
 import core
 import admin
 import user
