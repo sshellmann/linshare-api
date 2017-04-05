@@ -33,6 +33,7 @@ from linshareapi.user.threads import Threads
 from linshareapi.user.threadmembers import ThreadsMembers
 from linshareapi.user.documents import Documents
 from linshareapi.user.contactslist import ContactsList
+from linshareapi.user.contactslistcontact import ContactsListContact
 # V2
 from linshareapi.user.documents import Documents2
 from linshareapi.user.rshares import ReceivedShares2
@@ -65,7 +66,9 @@ class UserCli(CoreCli):
         self.threads = ANIY(self, api_version, "threads")
         self.thread_members = ANIY(self, api_version, "thread_members")
         self.users = ANIY(self, api_version, "users")
-        self.contactslists = ANIY(self, api_version, "contactslist")
+        self.contactslists = ANIY(self, api_version, "contactslists")
+        self.contactslistscontacts = ANIY(self, api_version,
+                                          "contactslistscontacts")
         # API declarations
         if api_version == 0:
             self.documents = Documents(self)
@@ -75,6 +78,7 @@ class UserCli(CoreCli):
             self.thread_members = ThreadsMembers(self)
             self.users = Users(self)
             self.contactslists = ContactsList(self)
+            self.contactslistscontacts = ContactsListContact(self)
         elif api_version == 1:
             self.base_url = "linshare/webservice/rest/user"
             self.users = Users2(self)
@@ -86,3 +90,4 @@ class UserCli(CoreCli):
             self.shares = Shares2(self)
             self.guests = Guests(self)
             self.contactslists = ContactsList(self)
+            self.contactslistscontacts = ContactsListContact(self)
