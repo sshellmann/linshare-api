@@ -86,7 +86,7 @@ class ThreadsMembers(GenericClass):
         rbu.add_field('role')
         rbu.add_field('admin', extended=True)
         rbu.add_field('readonly', extended=True)
-        rbu.add_field('id', extended=True)
+        # rbu.add_field('id', extended=True)
         rbu.add_field('userDomainId', extended=True)
         rbu.add_field('threadUuid', required=True, extended=True)
         return rbu
@@ -95,21 +95,16 @@ class ThreadsMembers(GenericClass):
 # -----------------------------------------------------------------------------
 class ThreadsMembers2(ThreadsMembers):
 
+    local_base_url = "threads"
+
     @Time('list')
     @Cache()
     def list(self, thread_uuid):
-        url = "threads/%s/members" % thread_uuid
+        url = "%(base)s/%(thread_uuid)s/members" % {
+            'base': self.local_base_url,
+            'thread_uuid': thread_uuid
+        }
         return self.core.list(url)
-
-
-#    @Time('get')
-#    def get(self, thread_uuid, uuid):
-#        """ Get one thread member."""
-#        url = "threads/%(t_uuid)s/members/%(uuid)s" % {
-#            't_uuid': thread_uuid,
-#            'uuid': uuid
-#        }
-#        return self.core.get(url)
 
     @Time('get')
     def get(self, thread_uuid, uuid):
@@ -137,6 +132,7 @@ class ThreadsMembers2(ThreadsMembers):
     def update(self, data):
         """ Update a thread member."""
         self.debug(data)
+        # TODO: weird ? missing members ?
         url = "threads/%s" % data.get('uuid')
         return self.core.update(url, data)
 
@@ -149,5 +145,58 @@ class ThreadsMembers2(ThreadsMembers):
         self.log.debug(thread_uuid)
         url = "threads/%(t_uuid)s/members" % {
             't_uuid': thread_uuid,
+        }
+        return self.core.create(url, data)
+
+
+# -----------------------------------------------------------------------------
+class WorkgroupMembers(ThreadsMembers2):
+
+    local_base_url = "work_groups"
+
+    @Time('get')
+    @Cache()
+    def get(self, wg_uuid, uuid):
+        """ Get one workgroup member."""
+        url = "%(base)s/%(wg_uuid)s/members/%(uuid)s" % {
+            'base': self.local_base_url,
+            'wg_uuid': wg_uuid,
+            'uuid': uuid
+        }
+        return self.core.get(url)
+
+    @Time('delete')
+    @Invalid()
+    def delete(self, wg_uuid, uuid):
+        """ Delete one thread member."""
+        url = "%(base)s/%(wg_uuid)s/members/%(uuid)s" % {
+            'base': self.local_base_url,
+            'wg_uuid': wg_uuid,
+            'uuid': uuid
+        }
+        return self.core.delete(url)
+
+    @Time('update')
+    @Invalid()
+    def update(self, data):
+        """ Update a workgroup member."""
+        self.debug(data)
+        url = "%(base)s/%(wg_uuid)s/members/%(uuid)s" % {
+            'base': self.local_base_url,
+            'wg_uuid': data.get('threadUuid'),
+            'uuid': data.get('uuid')
+        }
+        return self.core.update(url, data)
+
+    @Time('create')
+    @Invalid()
+    def create(self, data):
+        self.debug(data)
+        self._check(data)
+        thread_uuid = data.get('threadUuid')
+        self.log.debug(thread_uuid)
+        url = "%(base)s/%(wg_uuid)s/members" % {
+            'base': self.local_base_url,
+            'wg_uuid': data.get('threadUuid')
         }
         return self.core.create(url, data)

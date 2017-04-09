@@ -34,6 +34,7 @@ from linshareapi.user.core import GenericClass
 from linshareapi.user.core import Time as CTime
 from linshareapi.user.core import CM
 
+
 # pylint: disable=C0111
 # Missing docstring
 # pylint: disable=R0903
@@ -59,12 +60,15 @@ class Invalid(IInvalid):
 # -----------------------------------------------------------------------------
 class Threads(GenericClass):
 
+    local_base_url = "threads"
+
     # pylint: disable=R0903
     # Too few public methods (1/2)
     @Time('list')
     @Cache()
     def list(self):
-        return self.core.list("threads")
+        url = self.local_base_url
+        return self.core.list(url)
 
     @Time('delete')
     @Invalid()
@@ -92,14 +96,21 @@ class Threads2(Threads):
     @Time('get')
     def get(self, uuid):
         """ Get one thread."""
-        return self.core.get("threads/%s" % uuid)
+        url = "%(base)s/%(uuid)s" % {
+            'base': self.local_base_url,
+            'uuid': uuid
+        }
+        return self.core.get(url)
 
     @Time('delete')
     @Invalid()
     def delete(self, uuid):
         """ Delete one thread."""
         res = self.get(uuid)
-        url = "threads/%s" % uuid
+        url = "%(base)s/%(uuid)s" % {
+            'base': self.local_base_url,
+            'uuid': uuid
+        }
         self.core.delete(url)
         return res
 
@@ -108,7 +119,10 @@ class Threads2(Threads):
     def update(self, data):
         """ Update a thread."""
         self.debug(data)
-        url = "threads/%s" % data.get('uuid')
+        url = "%(base)s/%(uuid)s" % {
+            'base': self.local_base_url,
+            'uuid': data.get('uuid')
+        }
         return self.core.update(url, data)
 
     @Time('create')
@@ -116,4 +130,11 @@ class Threads2(Threads):
     def create(self, data):
         self.debug(data)
         self._check(data)
-        return self.core.create("threads", data)
+        url = self.local_base_url
+        return self.core.create(url, data)
+
+
+# -----------------------------------------------------------------------------
+class Workgroup(Threads2):
+
+    local_base_url = "work_groups"

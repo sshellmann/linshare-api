@@ -41,6 +41,7 @@ import datetime
 from ordereddict import OrderedDict
 from progressbar import ProgressBar, FileTransferSpeed, Bar, ETA, Percentage
 
+
 # pylint: disable=C0111
 # Missing docstring
 # -----------------------------------------------------------------------------
@@ -52,11 +53,12 @@ class LinShareException(Exception):
 #        self.code = code
 #        self.msg = msg
 
+
 # -----------------------------------------------------------------------------
 def extract_file_name(content_dispo):
     """Extract file name from the input request body"""
-    #print type(content_dispo)
-    #print repr(content_dispo)
+    # print type(content_dispo)
+    # print repr(content_dispo)
     # convertion of escape string (str type) from server
     # to unicode object
     content_dispo = content_dispo.decode('unicode-escape').strip('"')
@@ -116,8 +118,8 @@ class ApiNotImplementedYet(object):
         raise NotImplementedError(
             "The current end point '%(api)s' is not supported in the api \
 version '%(version)s'." % {
-                'api' : self.end_point,
-                'version' : self.version})
+                'api': self.end_point,
+                'version': self.version})
 
 
 # -----------------------------------------------------------------------------
@@ -223,7 +225,7 @@ class CoreCli(object):
         base64string = base64.encodestring('%s:%s' % (
             self.user, self.password)).replace('\n', '')
         request.add_header("Authorization", "Basic %s" % base64string)
-        #request.add_header("Cookie", "JSESSIONID=")
+        # request.add_header("Cookie", "JSESSIONID=")
 
     def get_json_result(self, resultq):
         json_obj = None
@@ -262,7 +264,7 @@ class CoreCli(object):
                 json_obj = True
         except urllib2.HTTPError as ex:
             code = "-1"
-            if self.debug >=3:
+            if self.debug >= 3:
                 print "---------- exception -----------"
                 sys.stderr.write(str(type(ex)))
                 sys.stderr.write("\n")
@@ -291,7 +293,7 @@ class CoreCli(object):
                 self.log.debug("Server error code : " + str(code))
                 self.log.debug("Server error message : " + str(msg))
             else:
-                if self.debug >=3:
+                if self.debug >= 3:
                     sys.stderr.write("payload : " + ex.read())
                     sys.stderr.write("\n")
             # request end
@@ -443,7 +445,7 @@ because its size is less or equal to zero." % {"filename": str(file_name)}
                                       file_size, file_path)
         post = poster.encode.MultipartParam("file", filename=file_name,
                                             fileobj=stream)
-        params = [post,]
+        params = [post, ("filesize", file_size)]
         if description:
             params.append(("description", description))
         datagen, headers = poster.encode.multipart_encode(params)
@@ -514,8 +516,8 @@ This method could throw exceptions like urllib2.HTTPError."""
         self.log.debug("download url : " + url)
         # Building request
         request = urllib2.Request(url)
-        #request.add_header('Content-Type', 'application/json; charset=UTF-8')
-        #request.add_header('Accept', 'application/json;charset=UTF-8')
+        # request.add_header('Content-Type', 'application/json; charset=UTF-8')
+        # request.add_header('Accept', 'application/json;charset=UTF-8')
         request.add_header('Accept', '*/*; charset=UTF-8')
         # request start
         starttime = datetime.datetime.now()
@@ -551,7 +553,8 @@ This method could throw exceptions like urllib2.HTTPError."""
                             break
                         cpt += 1
                 else:
-                    self.log.warn("'%s' already exists. It was overwriten.", file_name)
+                    self.log.warn("'%s' already exists. It was overwriten.",
+                                  file_name)
             stream = None
             pbar = None
             if progress_bar:

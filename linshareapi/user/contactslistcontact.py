@@ -59,6 +59,8 @@ class Invalid(IInvalid):
 # -----------------------------------------------------------------------------
 class ContactsListContact(GenericClass):
 
+    local_base_url = "lists"
+
     @Time('invalid')
     @Invalid()
     def invalid(self):
@@ -76,13 +78,17 @@ class ContactsListContact(GenericClass):
     @Time('list')
     @Cache()
     def list(self, list_uuid):
-        url = "lists/%s/contacts" % list_uuid
+        url = "%(base)s/%(list_uuid)s/contacts" % {
+            'base': self.local_base_url,
+            'list_uuid': list_uuid
+        }
         return self.core.list(url)
 
     @Time('get')
     def get(self, list_uuid, uuid):
         """ Get one contact's list."""
-        url = "lists/%(list_uuid)s/contacts/%(uuid)s" % {
+        url = "%(base)s/%(list_uuid)s/contacts/%(uuid)s" % {
+            'base': self.local_base_url,
             'list_uuid': list_uuid,
             'uuid': uuid
         }
@@ -93,7 +99,8 @@ class ContactsListContact(GenericClass):
     def delete(self, list_uuid, uuid):
         """ Delete one list."""
         res = self.get(list_uuid, uuid)
-        url = "lists/%(list_uuid)s/contacts/%(uuid)s" % {
+        url = "%(base)s/%(list_uuid)s/contacts/%(uuid)s" % {
+            'base': self.local_base_url,
             'list_uuid': list_uuid,
             'uuid': uuid
         }
@@ -105,7 +112,8 @@ class ContactsListContact(GenericClass):
     def update(self, data):
         """ Update a list."""
         self.debug(data)
-        url = "lists/%(list_uuid)s/contacts/%(uuid)s" % {
+        url = "%(base)s/%(list_uuid)s/contacts/%(uuid)s" % {
+            'base': self.local_base_url,
             'list_uuid': data.get('mailingListUuid'),
             'uuid': data.get('uuid')
         }
@@ -116,9 +124,16 @@ class ContactsListContact(GenericClass):
     def create(self, data):
         self.debug(data)
         self._check(data)
-        url = "lists/%(list_uuid)s/contacts" % {
+        url = "%(base)s/%(list_uuid)s/contacts" % {
+            'base': self.local_base_url,
             'list_uuid': data.get('mailingListUuid')
         }
-        res = self.core.create(url, data)
+        self.core.create(url, data)
         # we return inupt data because res = True (http 204)
         return data
+
+
+# -----------------------------------------------------------------------------
+class ContactsListContact2(ContactsListContact):
+
+    local_base_url = "contact_lists"

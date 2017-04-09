@@ -33,12 +33,16 @@ from linshareapi.user.threads import Threads
 from linshareapi.user.threadmembers import ThreadsMembers
 from linshareapi.user.documents import Documents
 from linshareapi.user.contactslist import ContactsList
+from linshareapi.user.contactslist import ContactsList2
 from linshareapi.user.contactslistcontact import ContactsListContact
+from linshareapi.user.contactslistcontact import ContactsListContact2
 # V2
 from linshareapi.user.documents import Documents2
 from linshareapi.user.rshares import ReceivedShares2
 from linshareapi.user.threads import Threads2
+from linshareapi.user.threads import Workgroup
 from linshareapi.user.threadmembers import ThreadsMembers2
+from linshareapi.user.threadmembers import WorkgroupMembers
 from linshareapi.user.threadentries import ThreadEntries
 from linshareapi.user.users import Users2
 from linshareapi.user.guests import Guests
@@ -49,8 +53,8 @@ from linshareapi.user.shares import Shares2
 # -----------------------------------------------------------------------------
 class UserCli(CoreCli):
 
-    VERSION = 1
-    VERSIONS = [0, 1]
+    VERSION = 2
+    VERSIONS = [0, 1, 2]
 
     def __init__(self, host, user, password, verbose, debug, api_version=None):
         super(UserCli, self).__init__(host, user, password, verbose, debug)
@@ -91,3 +95,17 @@ class UserCli(CoreCli):
             self.guests = Guests(self)
             self.contactslists = ContactsList(self)
             self.contactslistscontacts = ContactsListContact(self)
+        elif api_version == 2:
+            self.base_url = "linshare/webservice/rest/user/v2"
+            self.users = Users2(self)
+            self.documents = Documents2(self)
+            self.rshares = ReceivedShares2(self)
+            self.threads = Workgroup(self)
+            self.workgroups = Workgroup(self)
+            self.thread_members = WorkgroupMembers(self)
+            self.workgroup_members = WorkgroupMembers(self)
+            self.thread_entries = ThreadEntries(self)
+            self.shares = Shares2(self)
+            self.guests = Guests(self)
+            self.contactslists = ContactsList2(self)
+            self.contactslistscontacts = ContactsListContact2(self)

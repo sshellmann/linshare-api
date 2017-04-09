@@ -59,6 +59,8 @@ class Invalid(IInvalid):
 # -----------------------------------------------------------------------------
 class ContactsList(GenericClass):
 
+    local_base_url = "lists"
+
     @Time('invalid')
     @Invalid()
     def invalid(self):
@@ -77,13 +79,14 @@ class ContactsList(GenericClass):
     @Time('list')
     @Cache()
     def list(self):
-        url = "lists"
+        url = self.local_base_url
         return self.core.list(url)
 
     @Time('get')
     def get(self, uuid):
         """ Get one list."""
-        url = "lists/%(uuid)s" % {
+        url = "%(base)s/%(uuid)s" % {
+            'base': self.local_base_url,
             'uuid': uuid
         }
         return self.core.get(url)
@@ -93,7 +96,8 @@ class ContactsList(GenericClass):
     def delete(self, uuid):
         """ Delete one list."""
         res = self.get(uuid)
-        url = "lists/%(uuid)s" % {
+        url = "%(base)s/%(uuid)s" % {
+            'base': self.local_base_url,
             'uuid': uuid
         }
         self.core.delete(url)
@@ -104,7 +108,8 @@ class ContactsList(GenericClass):
     def update(self, data):
         """ Update a list."""
         self.debug(data)
-        url = "lists/%(uuid)s" % {
+        url = "%(base)s/%(uuid)s" % {
+            'base': self.local_base_url,
             'uuid': data.get('uuid')
         }
         return self.core.update(url, data)
@@ -114,5 +119,11 @@ class ContactsList(GenericClass):
     def create(self, data):
         self.debug(data)
         self._check(data)
-        url = "lists"
+        url = self.local_base_url
         return self.core.create(url, data)
+
+
+# -----------------------------------------------------------------------------
+class ContactsList2(ContactsList):
+
+    local_base_url = "contact_lists"
