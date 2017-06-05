@@ -44,6 +44,8 @@ from linshareapi.user.threads import Workgroup
 from linshareapi.user.threadmembers import ThreadsMembers2
 from linshareapi.user.threadmembers import WorkgroupMembers
 from linshareapi.user.threadentries import ThreadEntries
+from linshareapi.user.threadentries import WorkgroupContent
+from linshareapi.user.threadentries import WorkgroupFolders
 from linshareapi.user.users import Users2
 from linshareapi.user.guests import Guests
 from linshareapi.user.shares import Shares2
@@ -104,7 +106,9 @@ class UserCli(CoreCli):
             self.workgroups = Workgroup(self)
             self.thread_members = WorkgroupMembers(self)
             self.workgroup_members = WorkgroupMembers(self)
-            self.thread_entries = ThreadEntries(self)
+            self.thread_entries = WorkgroupContent(self)
+            self.workgroup_nodes = WorkgroupContent(self)
+            self.workgroup_folders = WorkgroupFolders(self)
             self.shares = Shares2(self)
             self.guests = Guests(self)
             self.contactslists = ContactsList2(self)
