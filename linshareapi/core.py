@@ -585,6 +585,7 @@ This method could throw exceptions like urllib2.HTTPError."""
 
 
 class ResourceBuilder(object):
+    """ Helper to create a ressource """
 
     def __init__(self, name=None, required=False):
         self._name = name
@@ -593,6 +594,20 @@ class ResourceBuilder(object):
 
     def add_field(self, field, arg=None, value=None, extended=False,
                   hidden=False, e_type=str, required=None):
+        """Add a new field to the current ResourceBuilder.
+
+           Keyword arguments:
+           field    -- field name
+           arg      -- name of the attribute name in arg object (argparse)
+           value    -- a default for this field, used for resource creation.
+           extended -- If set to true, the current field will be display in
+                       extended list mode only.
+           hidden   -- If set to true, the current field won't be exposed
+                       as available keys.
+           e_type   -- field data type (default str)
+           required -- True if the current field is required for create
+                       and update methods
+        """
         if required is None:
             required = self._required
         if arg is None:
