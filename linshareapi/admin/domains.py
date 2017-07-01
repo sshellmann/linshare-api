@@ -152,12 +152,12 @@ class Domains(GenericClass):
 # -----------------------------------------------------------------------------
 class Domains2(Domains):
 
-    @Time('get')
-    @Cache()
-    def get(self, identifier):
-        """ Get one domain."""
-        url = "domains/{i}".format({"i": identifier})
-        return self.core.get(url)
+#    @Time('get')
+#    @Cache()
+#    def get(self, identifier):
+#        """ Get one domain."""
+#        url = "domains/{i}".format({"i": identifier})
+#        return self.core.get(url)
 
     def get_rbu(self):
         rbu = ResourceBuilder("domains")
@@ -168,6 +168,7 @@ class Domains2(Domains):
         rbu.add_field('type', "domain_type", value="TOPDOMAIN")
         rbu.add_field('parent', "parent_id")
         rbu.add_field('language', value="ENGLISH")
+        rbu.add_field('externalMailLocale', value="ENGLISH")
         rbu.add_field('userRole', "role", value="SIMPLE")
         rbu.add_field('mailConfigUuid',
                       value="946b190d-4c95-485f-bfe6-d288a2de1edd",
@@ -179,7 +180,7 @@ class Domains2(Domains):
         rbu.add_field('authShowOrder', value="1", extended=True)
         rbu.add_field('providers', value=[], extended=True)
         # rbu.add_field('externalMailLocale', value="ENGLISH")
-        rbu.add_field('currentWelcomeMessages',
+        rbu.add_field('currentWelcomeMessage',
                       value={'uuid': "4bc57114-c8c9-11e4-a859-37b5db95d856"},
                       extended=True)
         return rbu
