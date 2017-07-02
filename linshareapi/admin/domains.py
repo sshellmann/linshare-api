@@ -146,6 +146,10 @@ class Domains(GenericClass):
         rbu.add_field('description', value="")
         rbu.add_field('authShowOrder', value="1", extended=True)
         rbu.add_field('providers', value=[], extended=True)
+        rbu.add_field('currentWelcomeMessages',
+                      value={'uuid': "4bc57114-c8c9-11e4-a859-37b5db95d856"},
+                      extended=True)
+        rbu.add_field('externalMailLocale', value="ENGLISH")
         return rbu
 
 
@@ -179,7 +183,6 @@ class Domains2(Domains):
         rbu.add_field('description', value="")
         rbu.add_field('authShowOrder', value="1", extended=True)
         rbu.add_field('providers', value=[], extended=True)
-        # rbu.add_field('externalMailLocale', value="ENGLISH")
         rbu.add_field('currentWelcomeMessage',
                       value={'uuid': "4bc57114-c8c9-11e4-a859-37b5db95d856"},
                       extended=True)

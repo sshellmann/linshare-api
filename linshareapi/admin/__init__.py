@@ -44,11 +44,12 @@ from linshareapi.admin.domainpolicies import DomainPolicies
 class AdminCli(CoreCli):
     # pylint: disable=R0902
 
-    VERSION = 1
-    VERSIONS = [0, 1]
+    VERSION = 2
+    VERSIONS = [0, 1, 2]
 
     def __init__(self, host, user, password, verbose, debug, api_version=None):
         super(AdminCli, self).__init__(host, user, password, verbose, debug)
+        self.log.debug("api_version : " + str(api_version))
         if api_version is None:
             api_version = self.VERSION
         if api_version not in self.VERSIONS:
@@ -76,6 +77,16 @@ class AdminCli(CoreCli):
             self.funcs = Functionalities(self)
             self.domain_policies = DomainPolicies(self)
         elif api_version == 1:
+            self.threads = Threads(self)
+            self.thread_members = ThreadsMembers(self)
+            self.users = Users(self)
+            self.iusers = InconsistentUsers(self)
+            self.domains = Domains(self)
+            self.ldap_connections = LdapConnections2(self)
+            self.domain_patterns = DomainPatterns2(self)
+            self.funcs = Functionalities(self)
+            self.domain_policies = DomainPolicies(self)
+        elif api_version == 2:
             self.threads = Threads(self)
             self.thread_members = ThreadsMembers(self)
             self.users = Users(self)
