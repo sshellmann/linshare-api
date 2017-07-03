@@ -653,6 +653,13 @@ class ResourceBuilder(object):
         if field is not None:
             field['arg'] = arg
 
+    def get_value(self, key):
+        field = self._fields.get(key, None)
+        if field is not None:
+            return field['value']
+        else:
+            return None
+
     def set_value(self, key, value):
         field = self._fields.get(key, None)
         if field is not None:
